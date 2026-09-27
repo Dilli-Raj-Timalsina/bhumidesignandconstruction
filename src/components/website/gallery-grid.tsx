@@ -48,7 +48,7 @@ export function GalleryGrid({
     <>
       <div
         className={cn(
-          "grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4",
+          "grid grid-flow-dense grid-cols-2 gap-3 md:grid-cols-4 md:gap-4",
           compact && "md:grid-cols-4",
         )}
       >
@@ -59,10 +59,13 @@ export function GalleryGrid({
             onClick={() => setActive(index)}
             className={cn(
               "group relative overflow-hidden text-left",
-              index % 5 === 0
-                ? "col-span-2 row-span-2 aspect-square"
-                : "aspect-[1/1.15]",
-              compact && index % 5 === 0 && "row-span-1 aspect-[1.25/1]",
+              compact
+                ? index % 5 === 0
+                  ? "col-span-2 row-span-1 aspect-[1.25/1]"
+                  : "aspect-[1/1.15] md:aspect-auto md:h-full"
+                : index % 5 === 0
+                  ? "col-span-2 row-span-2 aspect-square"
+                  : "aspect-[1/1.15]",
             )}
             aria-label={`Open image: ${image.altText || image.caption || image.albumTitle || "gallery image"}`}
           >

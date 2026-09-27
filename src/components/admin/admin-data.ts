@@ -463,40 +463,32 @@ export async function getAdminSettings(): Promise<AdminSettings> {
 
 export async function getDashboardCounts(): Promise<{
   projects: number;
-  posts: number;
   images: number;
   messages: number;
 }> {
   const supabase = await createClient();
-  const [projects, posts, projectImages, galleryImages, messages] =
-    await Promise.all([
-      supabase
-        .from("projects")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "published"),
-      supabase
-        .from("posts")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "published"),
-      supabase
-        .from("project_images")
-        .select("id", { count: "exact", head: true }),
-      supabase
-        .from("gallery_images")
-        .select("id", { count: "exact", head: true }),
-      supabase
-        .from("contact_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "new"),
-    ]);
+  const [projects, projectImages, galleryImages, messages] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published"),
+    supabase
+      .from("project_images")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("gallery_images")
+      .select("id", { count: "exact", head: true }),
+    supabase
+      .from("contact_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "new"),
+  ]);
   fail(projects.error);
-  fail(posts.error);
   fail(projectImages.error);
   fail(galleryImages.error);
   fail(messages.error);
   return {
     projects: projects.count ?? 0,
-    posts: posts.count ?? 0,
     images: (projectImages.count ?? 0) + (galleryImages.count ?? 0),
     messages: messages.count ?? 0,
   };

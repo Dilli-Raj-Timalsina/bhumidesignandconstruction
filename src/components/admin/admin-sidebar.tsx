@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BookOpenText,
   FolderKanban,
   Images,
   LayoutDashboard,
@@ -27,7 +26,6 @@ const navigation = [
   { href: "/admin/projects", label: "Projects", icon: FolderKanban },
   { href: "/admin/services", label: "Services", icon: Wrench },
   { href: "/admin/gallery", label: "Gallery", icon: Images },
-  { href: "/admin/posts", label: "Insights", icon: BookOpenText },
   { href: "/admin/contact", label: "Contact details", icon: PhoneCall },
   { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/settings", label: "Settings", icon: Settings },

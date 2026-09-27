@@ -1,5 +1,6 @@
 import { Footer } from "@/components/website/footer";
 import { Header } from "@/components/website/header";
+import { WhatsAppButton } from "@/components/website/whatsapp-button";
 import { getSiteContent } from "@/features/content/queries";
 
 export default async function WebsiteLayout({
@@ -17,6 +18,7 @@ export default async function WebsiteLayout({
         phone={site.phone}
         logoSrc={site.logoImage}
       />
+      <WhatsAppButton phone={site.phone} />
     </div>
   );
 }

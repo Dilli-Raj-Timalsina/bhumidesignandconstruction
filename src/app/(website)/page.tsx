@@ -3,21 +3,21 @@ import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
-import { BlogCard } from "@/components/website/blog-card";
 import { ContentEmptyState } from "@/components/website/empty-content";
 import { GalleryGrid } from "@/components/website/gallery-grid";
+import {
+  CompanyHighlights,
+  ServiceOfferings,
+} from "@/components/website/marketing-sections";
 import { MediaFrame } from "@/components/website/media-frame";
 import { ProjectCard } from "@/components/website/project-card";
 import { SectionHeading } from "@/components/website/section-heading";
-import { ServiceList } from "@/components/website/service-list";
 import { CtaSection } from "@/components/website/cta-section";
 import {
   getAllGalleryImages,
   getFeaturedProject,
   getGalleryAlbums,
-  getPosts,
   getProjects,
-  getServices,
   getSiteContent,
 } from "@/features/content/queries";
 
@@ -28,15 +28,12 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const [site, services, featuredProject, projects, albums, posts] =
-    await Promise.all([
-      getSiteContent(),
-      getServices(6),
-      getFeaturedProject(),
-      getProjects(6),
-      getGalleryAlbums(4),
-      getPosts(3),
-    ]);
+  const [site, featuredProject, projects, albums] = await Promise.all([
+    getSiteContent(),
+    getFeaturedProject(),
+    getProjects(6),
+    getGalleryAlbums(4),
+  ]);
   const galleryImages = getAllGalleryImages(albums).slice(0, 8);
 
   return (
@@ -95,6 +92,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <CompanyHighlights />
 
       <section className="bg-canvas py-16 md:py-24">
         <div className="site-shell">
@@ -174,25 +173,18 @@ export default async function HomePage() {
       <section className="border-y border-line bg-white py-16 md:py-28">
         <div className="site-shell">
           <SectionHeading
-            eyebrow="Capabilities"
+            eyebrow="Services"
             title={
               <>
-                Thoughtful planning.
+                From first sketch
                 <br />
-                Confident execution.
+                to final handover.
               </>
             }
-            description="BHUMI’s documented capabilities span turnkey construction, civil and structural works, substation civil works, and supervised design and interior coordination."
+            description="Practical support for every stage of your project — from early advice and design through construction, quality checks, and handover."
           />
           <div className="mt-10 md:mt-14">
-            {services.length > 0 ? (
-              <ServiceList services={services} />
-            ) : (
-              <ContentEmptyState
-                title="Capabilities will appear here."
-                detail="Publish supported services from the content workspace to introduce BHUMI’s current capabilities."
-              />
-            )}
+            <ServiceOfferings />
           </div>
           <ButtonLink href="/services" variant="text" className="mt-8">
             Explore services <ArrowUpRight size={16} />
@@ -260,34 +252,6 @@ export default async function HomePage() {
               <ContentEmptyState
                 title="Project gallery pending"
                 detail="Images can be organized into albums with captions and alt text from the gallery workspace."
-              />
-            )}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-28">
-        <div className="site-shell">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <p className="eyebrow">Insights</p>
-              <h2 className="section-title mt-5">Notes from the practice.</h2>
-            </div>
-            <ButtonLink href="/insights" variant="text">
-              All insights <ArrowUpRight size={16} />
-            </ButtonLink>
-          </div>
-          <div className="mt-10 md:mt-14">
-            {posts.length > 0 ? (
-              <div className="grid gap-10 md:grid-cols-3 md:gap-7">
-                {posts.map((post) => (
-                  <BlogCard key={post.id} post={post} />
-                ))}
-              </div>
-            ) : (
-              <ContentEmptyState
-                title="No insights published yet."
-                detail="The supplied portfolio contains project records rather than standalone articles. Future approved updates will appear here."
               />
             )}
           </div>

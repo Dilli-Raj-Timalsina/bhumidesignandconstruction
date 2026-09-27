@@ -52,7 +52,7 @@ export function ContactForm() {
   return (
     <form
       onSubmit={onSubmit}
-      className="border border-line bg-white p-6 sm:p-8"
+      className="h-fit self-start border border-line bg-white p-6 sm:p-8"
       noValidate
     >
       <label className="sr-only" aria-hidden="true">

@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
+  icons: {
+    icon: "/brand/bhumi-icon.png",
+    shortcut: "/brand/bhumi-icon.png",
+    apple: "/brand/bhumi-icon.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_NP",

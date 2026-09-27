@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { CtaSection } from "@/components/website/cta-section";
+import { ProcessTimeline } from "@/components/website/marketing-sections";
 import { MediaFrame } from "@/components/website/media-frame";
 import { SectionHeading } from "@/components/website/section-heading";
 import { getSiteContent } from "@/features/content/queries";
@@ -109,6 +110,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
+      <ProcessTimeline />
       <CtaSection />
     </>
   );

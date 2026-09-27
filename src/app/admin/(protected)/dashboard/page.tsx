@@ -1,11 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  FolderKanban,
-  Images,
-  Mail,
-  Newspaper,
-} from "lucide-react";
+import { ArrowUpRight, FolderKanban, Images, Mail } from "lucide-react";
 
 import { getDashboardCounts } from "@/components/admin/admin-data";
 import { AdminCard, PageHeader } from "@/components/admin/page-header";
@@ -16,12 +10,6 @@ const metrics = [
     label: "Published projects",
     href: "/admin/projects",
     icon: FolderKanban,
-  },
-  {
-    key: "posts",
-    label: "Published insights",
-    href: "/admin/posts",
-    icon: Newspaper,
   },
   {
     key: "images",
@@ -82,12 +70,6 @@ export default async function DashboardPage() {
               className="min-h-10 bg-bhumi px-4 py-2.5 text-sm font-semibold text-white hover:bg-bhumi-dark"
             >
               Add project
-            </Link>
-            <Link
-              href="/admin/posts/new"
-              className="min-h-10 border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:bg-slate-50"
-            >
-              Write insight
             </Link>
           </div>
         </AdminCard>
