@@ -18,6 +18,7 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   return (
     <form
       action={updateSiteSettingsAction}
+      encType="multipart/form-data"
       className="mx-auto max-w-5xl space-y-5"
     >
       {settings.id ? (
@@ -67,7 +68,6 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
             name="logo_path"
             value={optional(settings.logoPath)}
             previewUrl={publicMediaUrl(settings.logoPath)}
-            folder="site"
             label="Logo"
           />
         </div>
@@ -138,14 +138,12 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           name="hero_image_path"
           value={optional(settings.heroImagePath)}
           previewUrl={publicMediaUrl(settings.heroImagePath)}
-          folder="site"
           label="Hero image"
         />
         <ImageUploader
           name="about_image_path"
           value={optional(settings.aboutImagePath)}
           previewUrl={publicMediaUrl(settings.aboutImagePath)}
-          folder="site"
           label="About image"
         />
       </FormSection>

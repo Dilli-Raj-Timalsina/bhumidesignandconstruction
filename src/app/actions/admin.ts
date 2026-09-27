@@ -35,17 +35,9 @@ import {
   serviceUpdateSchema,
   siteSettingsSchema,
   siteSettingsUpdateSchema,
-  toFormObject,
 } from "@/lib/validations";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
-
-type ActionResult = {
-  ok: boolean;
-  message: string;
-  path?: string;
-  url?: string;
-};
 
 const mediaBucket = "media";
 const maximumUploadBytes = 8 * 1024 * 1024;
@@ -55,15 +47,11 @@ const acceptedImages = new Map<string, string>([
   ["image/webp", "webp"],
   ["image/avif", "avif"],
 ]);
-const uploadFolders = new Set([
-  "gallery",
-  "posts",
-  "projects",
-  "services",
-  "site",
-  "uploads",
-]);
+type UploadFolder =
+  "gallery" | "posts" | "projects" | "services" | "site" | "uploads";
 const adminPathPattern = /^\/admin(?:\/[A-Za-z0-9._~-]+)*$/;
+const managedMediaPathPattern =
+  /^(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 
 function matchesBytes(
   bytes: Uint8Array,
@@ -161,7 +149,17 @@ function successRedirect(path: string, message: string): never {
 }
 
 function formRecord(formData: FormData) {
-  return toFormObject(formData);
+  const record = Object.fromEntries(
+    [...formData.entries()].filter((entry) => !(entry[1] instanceof File)),
+  );
+  for (const [name, value] of formData.entries()) {
+    if (!(value instanceof File) || value.size === 0 || !name.endsWith("_file"))
+      continue;
+    // File contents are uploaded only after the rest of the form validates.
+    // This valid placeholder is always replaced with the generated object key.
+    record[name.slice(0, -"_file".length)] = "uploads/pending";
+  }
+  return record;
 }
 
 function revalidateContent(
@@ -238,11 +236,36 @@ function revalidateSettings() {
   revalidatePath("/", "layout");
 }
 
+function isManagedMediaPath(path: string | null | undefined): path is string {
+  return Boolean(path && managedMediaPathPattern.test(path));
+}
+
+async function queueMediaCleanup(
+  client: SupabaseClient<Database>,
+  path: string,
+  message?: string,
+) {
+  if (!isManagedMediaPath(path)) return;
+  await client.from("media_cleanup_queue").upsert({
+    path,
+    eligible_after: new Date().toISOString(),
+    last_error: message?.slice(0, 500) ?? null,
+  });
+}
+
+async function clearQueuedMediaCleanup(
+  client: SupabaseClient<Database>,
+  path: string,
+) {
+  if (!isManagedMediaPath(path)) return;
+  await client.from("media_cleanup_queue").delete().eq("path", path);
+}
+
 async function deleteMediaPathIfUnused(
   client: SupabaseClient<Database>,
   path: string | null | undefined,
 ) {
-  if (!path) return;
+  if (!isManagedMediaPath(path)) return;
   const checks = await Promise.all([
     client
       .from("projects")
@@ -269,6 +292,10 @@ async function deleteMediaPathIfUnused(
       .select("id", { count: "exact", head: true })
       .eq("cover_image_path", path),
     client
+      .from("post_media")
+      .select("post_id", { count: "exact", head: true })
+      .eq("image_path", path),
+    client
       .from("site_settings")
       .select("id", { count: "exact", head: true })
       .eq("logo_path", path),
@@ -282,15 +309,127 @@ async function deleteMediaPathIfUnused(
       .eq("about_image_path", path),
   ]);
 
-  if (checks.some((result) => result.error || (result.count ?? 0) > 0)) return;
-  await client.storage.from(mediaBucket).remove([path]);
+  if (checks.some((result) => result.error)) {
+    await queueMediaCleanup(client, path, "Could not verify media references.");
+    return;
+  }
+  if (checks.some((result) => (result.count ?? 0) > 0)) {
+    await clearQueuedMediaCleanup(client, path);
+    return;
+  }
+
+  const { error } = await client.storage.from(mediaBucket).remove([path]);
+  if (error) {
+    await queueMediaCleanup(client, path, error.message);
+    return;
+  }
+  await clearQueuedMediaCleanup(client, path);
+}
+
+async function processQueuedMediaCleanups(
+  client: SupabaseClient<Database>,
+  limit = 20,
+) {
+  const { data, error } = await client
+    .from("media_cleanup_queue")
+    .select("path")
+    .lte("eligible_after", new Date().toISOString())
+    .order("eligible_after", { ascending: true })
+    .limit(limit);
+  if (error) return;
+  await Promise.all(
+    (data ?? []).map((entry) => deleteMediaPathIfUnused(client, entry.path)),
+  );
+}
+
+async function uploadImageFile(
+  client: SupabaseClient<Database>,
+  file: File,
+  folder: UploadFolder,
+): Promise<string> {
+  if (!acceptedImages.has(file.type)) {
+    throw new Error("Only JPEG, PNG, WebP, and AVIF images are supported.");
+  }
+  if (file.size === 0 || file.size > maximumUploadBytes) {
+    throw new Error("Image files must be 8 MB or smaller.");
+  }
+  if (!(await hasMatchingImageSignature(file))) {
+    throw new Error("The file contents do not match the selected image type.");
+  }
+
+  const extension = acceptedImages.get(file.type);
+  if (!extension) throw new Error("Unsupported image file type.");
+  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await client.storage
+    .from(mediaBucket)
+    .upload(path, file, { contentType: file.type, upsert: false });
+  if (error)
+    throw new Error("The image could not be uploaded. Please try again.");
+  return path;
+}
+
+async function uploadImageFromForm(
+  client: SupabaseClient<Database>,
+  formData: FormData,
+  field: string,
+  folder: UploadFolder,
+) {
+  const file = formData.get(`${field}_file`);
+  if (!(file instanceof File) || file.size === 0) return null;
+  await processQueuedMediaCleanups(client);
+  return uploadImageFile(client, file, folder);
+}
+
+async function uploadImageFields(
+  client: SupabaseClient<Database>,
+  formData: FormData,
+  fields: readonly { field: string; folder: UploadFolder }[],
+) {
+  const uploaded: Record<string, string> = {};
+  try {
+    for (const { field, folder } of fields) {
+      const path = await uploadImageFromForm(client, formData, field, folder);
+      if (path) uploaded[field] = path;
+    }
+    return uploaded;
+  } catch (error) {
+    await Promise.all(
+      Object.values(uploaded).map((path) =>
+        removeNewUploadAfterFailedWrite(client, path),
+      ),
+    );
+    throw error;
+  }
+}
+
+function uploadErrorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : "The image could not be uploaded. Please try again.";
+}
+
+async function removeNewUploadAfterFailedWrite(
+  client: SupabaseClient<Database>,
+  path: string | null,
+) {
+  if (path) await deleteMediaPathIfUnused(client, path);
+}
+
+async function cleanupReplacedMedia(
+  client: SupabaseClient<Database>,
+  previousPath: string | null | undefined,
+  currentPath: string | null | undefined,
+) {
+  if (previousPath && previousPath !== currentPath) {
+    await deleteMediaPathIfUnused(client, previousPath);
+  }
 }
 
 async function deleteProjectMedia(
   client: SupabaseClient<Database>,
   id: string,
 ) {
-  const [{ data: project }, { data: images }] = await Promise.all([
+  const [projectResult, imageResult] = await Promise.all([
     client
       .from("projects")
       .select("cover_image_path")
@@ -298,6 +437,11 @@ async function deleteProjectMedia(
       .maybeSingle(),
     client.from("project_images").select("image_path").eq("project_id", id),
   ]);
+  if (projectResult.error || !projectResult.data || imageResult.error) {
+    return new Error("The project could not be read before deletion.");
+  }
+  const project = projectResult.data;
+  const images = imageResult.data;
   const paths = [
     project?.cover_image_path,
     ...(images ?? []).map((image) => image.image_path),
@@ -309,7 +453,7 @@ async function deleteProjectMedia(
 }
 
 async function deleteAlbumMedia(client: SupabaseClient<Database>, id: string) {
-  const [{ data: album }, { data: images }] = await Promise.all([
+  const [albumResult, imageResult] = await Promise.all([
     client
       .from("gallery_albums")
       .select("cover_image_path")
@@ -317,6 +461,11 @@ async function deleteAlbumMedia(client: SupabaseClient<Database>, id: string) {
       .maybeSingle(),
     client.from("gallery_images").select("image_path").eq("album_id", id),
   ]);
+  if (albumResult.error || !albumResult.data || imageResult.error) {
+    return new Error("The album could not be read before deletion.");
+  }
+  const album = albumResult.data;
+  const images = imageResult.data;
   const paths = [
     album?.cover_image_path,
     ...(images ?? []).map((image) => image.image_path),
@@ -406,47 +555,6 @@ export async function logoutAction() {
   redirect("/admin/login");
 }
 
-export async function uploadImageAction(
-  formData: FormData,
-): Promise<ActionResult> {
-  await requireAdmin();
-  const file = formData.get("file");
-  const requestedFolder = formData.get("folder");
-  if (!(file instanceof File))
-    return { ok: false, message: "Choose an image file to upload." };
-  if (!acceptedImages.has(file.type))
-    return {
-      ok: false,
-      message: "Only JPEG, PNG, WebP, and AVIF images are supported.",
-    };
-  if (file.size === 0 || file.size > maximumUploadBytes)
-    return { ok: false, message: "Image files must be 8 MB or smaller." };
-  if (!(await hasMatchingImageSignature(file)))
-    return {
-      ok: false,
-      message: "The file contents do not match the selected image type.",
-    };
-
-  const folder =
-    typeof requestedFolder === "string" && uploadFolders.has(requestedFolder)
-      ? requestedFolder
-      : "uploads";
-  const extension = acceptedImages.get(file.type);
-  if (!extension) return { ok: false, message: "Unsupported image file type." };
-  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
-  const supabase = await createClient();
-  const { error } = await supabase.storage
-    .from(mediaBucket)
-    .upload(path, file, { contentType: file.type, upsert: false });
-  if (error)
-    return {
-      ok: false,
-      message: "The image could not be uploaded. Please try again.",
-    };
-  const { data } = supabase.storage.from(mediaBucket).getPublicUrl(path);
-  return { ok: true, message: "Image uploaded.", path, url: data.publicUrl };
-}
-
 export async function createProjectAction(formData: FormData) {
   await requireAdmin();
   const parsed = projectSchema.safeParse(formRecord(formData));
@@ -456,13 +564,29 @@ export async function createProjectAction(formData: FormData) {
       validationMessage(parsed.error.issues),
     );
   const supabase = await createClient();
-  const { error } = await supabase.from("projects").insert(parsed.data);
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "projects",
+    );
+  } catch (error) {
+    errorRedirect("/admin/projects/new", uploadErrorMessage(error));
+  }
+  const project = {
+    ...parsed.data,
+    ...(uploadedPath ? { cover_image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("projects").insert(project);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       "/admin/projects/new",
       "The project could not be created. Check that its slug is unique.",
     );
-  revalidateContent("projects", parsed.data.slug);
+  revalidateContent("projects", project.slug);
   successRedirect("/admin/projects", "Project created.");
 }
 
@@ -478,15 +602,39 @@ export async function updateProjectAction(formData: FormData) {
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const { id, ...updates } = parsed.data;
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("projects")
+    .select("cover_image_path")
+    .eq("id", id)
+    .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect(fallbackPath, "The project could not be found.");
+
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "projects",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.cover_image_path;
   const { error } = await supabase
     .from("projects")
-    .update(updates)
-    .eq("id", id);
+    .update({ ...updates, cover_image_path: nextPath })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       fallbackPath,
       "The project could not be saved. Check that its slug is unique.",
     );
+  await cleanupReplacedMedia(supabase, existing.cover_image_path, nextPath);
   revalidateContent("projects", updates.slug);
   successRedirect(`/admin/projects/${id}`, "Project saved.");
 }
@@ -515,7 +663,30 @@ export async function createProjectImageAction(formData: FormData) {
   if (!parsed.success)
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const supabase = await createClient();
-  const { error } = await supabase.from("project_images").insert(parsed.data);
+  const { data: project, error: projectError } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", parsed.data.project_id)
+    .maybeSingle();
+  if (projectError || !project)
+    errorRedirect(fallbackPath, "The project could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "image_path",
+      "projects",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const image = {
+    ...parsed.data,
+    ...(uploadedPath ? { image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("project_images").insert(image);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error) errorRedirect(fallbackPath, "The image could not be added.");
   revalidateContent("projects");
   successRedirect(fallbackPath, "Project image added.");
@@ -533,11 +704,36 @@ export async function updateProjectImageAction(formData: FormData) {
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const { id, project_id: _projectId, ...updates } = parsed.data;
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("project_images")
+    .select("image_path")
+    .eq("id", id)
+    .eq("project_id", parsed.data.project_id)
+    .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect(fallbackPath, "The image could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "image_path",
+      "projects",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.image_path;
   const { error } = await supabase
     .from("project_images")
-    .update(updates)
-    .eq("id", id);
+    .update({ ...updates, image_path: nextPath })
+    .eq("id", id)
+    .eq("project_id", parsed.data.project_id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error) errorRedirect(fallbackPath, "The image could not be saved.");
+  await cleanupReplacedMedia(supabase, existing.image_path, nextPath);
   revalidateContent("projects");
   successRedirect(fallbackPath, "Project image saved.");
 }
@@ -553,11 +749,18 @@ export async function deleteProjectImageAction(formData: FormData) {
     .from("project_images")
     .select("image_path")
     .eq("id", id.data)
+    .eq("project_id", projectId.data)
     .maybeSingle();
+  if (!existing)
+    errorRedirect(
+      `/admin/projects/${projectId.data}`,
+      "The image could not be found.",
+    );
   const { error } = await supabase
     .from("project_images")
     .delete()
-    .eq("id", id.data);
+    .eq("id", id.data)
+    .eq("project_id", projectId.data);
   if (error)
     errorRedirect(
       `/admin/projects/${projectId.data}`,
@@ -580,7 +783,23 @@ export async function createServiceAction(formData: FormData) {
       validationMessage(parsed.error.issues),
     );
   const supabase = await createClient();
-  const { error } = await supabase.from("services").insert(parsed.data);
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "services",
+    );
+  } catch (error) {
+    errorRedirect("/admin/services/new", uploadErrorMessage(error));
+  }
+  const service = {
+    ...parsed.data,
+    ...(uploadedPath ? { cover_image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("services").insert(service);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       "/admin/services/new",
@@ -602,15 +821,38 @@ export async function updateServiceAction(formData: FormData) {
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const { id, ...updates } = parsed.data;
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("services")
+    .select("cover_image_path")
+    .eq("id", id)
+    .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect(fallbackPath, "The service could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "services",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.cover_image_path;
   const { error } = await supabase
     .from("services")
-    .update(updates)
-    .eq("id", id);
+    .update({ ...updates, cover_image_path: nextPath })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       fallbackPath,
       "The service could not be saved. Check that its slug is unique.",
     );
+  await cleanupReplacedMedia(supabase, existing.cover_image_path, nextPath);
   revalidateContent("services");
   successRedirect(`/admin/services/${id}`, "Service saved.");
 }
@@ -621,11 +863,13 @@ export async function deleteServiceAction(formData: FormData) {
   if (!parsed.success)
     errorRedirect("/admin/services", "The service could not be identified.");
   const supabase = await createClient();
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("services")
     .select("cover_image_path")
     .eq("id", parsed.data)
     .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect("/admin/services", "The service could not be found.");
   const { error } = await supabase
     .from("services")
     .delete()
@@ -643,7 +887,23 @@ export async function createGalleryAlbumAction(formData: FormData) {
   if (!parsed.success)
     errorRedirect("/admin/gallery/new", validationMessage(parsed.error.issues));
   const supabase = await createClient();
-  const { error } = await supabase.from("gallery_albums").insert(parsed.data);
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "gallery",
+    );
+  } catch (error) {
+    errorRedirect("/admin/gallery/new", uploadErrorMessage(error));
+  }
+  const album = {
+    ...parsed.data,
+    ...(uploadedPath ? { cover_image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("gallery_albums").insert(album);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       "/admin/gallery/new",
@@ -665,15 +925,38 @@ export async function updateGalleryAlbumAction(formData: FormData) {
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const { id, ...updates } = parsed.data;
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("gallery_albums")
+    .select("cover_image_path")
+    .eq("id", id)
+    .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect(fallbackPath, "The album could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "gallery",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.cover_image_path;
   const { error } = await supabase
     .from("gallery_albums")
-    .update(updates)
-    .eq("id", id);
+    .update({ ...updates, cover_image_path: nextPath })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       fallbackPath,
       "The album could not be saved. Check that its slug is unique.",
     );
+  await cleanupReplacedMedia(supabase, existing.cover_image_path, nextPath);
   revalidateContent("gallery");
   successRedirect(`/admin/gallery/${id}`, "Gallery album saved.");
 }
@@ -701,7 +984,30 @@ export async function createGalleryImageAction(formData: FormData) {
   if (!parsed.success)
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const supabase = await createClient();
-  const { error } = await supabase.from("gallery_images").insert(parsed.data);
+  const { data: album, error: albumError } = await supabase
+    .from("gallery_albums")
+    .select("id")
+    .eq("id", parsed.data.album_id)
+    .maybeSingle();
+  if (albumError || !album)
+    errorRedirect(fallbackPath, "The album could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "image_path",
+      "gallery",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const image = {
+    ...parsed.data,
+    ...(uploadedPath ? { image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("gallery_images").insert(image);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error) errorRedirect(fallbackPath, "The image could not be added.");
   revalidateContent("gallery");
   successRedirect(fallbackPath, "Gallery image added.");
@@ -719,11 +1025,36 @@ export async function updateGalleryImageAction(formData: FormData) {
     errorRedirect(fallbackPath, validationMessage(parsed.error.issues));
   const { id, album_id: _albumId, ...updates } = parsed.data;
   const supabase = await createClient();
+  const { data: existing, error: existingError } = await supabase
+    .from("gallery_images")
+    .select("image_path")
+    .eq("id", id)
+    .eq("album_id", parsed.data.album_id)
+    .maybeSingle();
+  if (existingError || !existing)
+    errorRedirect(fallbackPath, "The image could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "image_path",
+      "gallery",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.image_path;
   const { error } = await supabase
     .from("gallery_images")
-    .update(updates)
-    .eq("id", id);
+    .update({ ...updates, image_path: nextPath })
+    .eq("id", id)
+    .eq("album_id", parsed.data.album_id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error) errorRedirect(fallbackPath, "The image could not be saved.");
+  await cleanupReplacedMedia(supabase, existing.image_path, nextPath);
   revalidateContent("gallery");
   successRedirect(fallbackPath, "Gallery image saved.");
 }
@@ -739,11 +1070,18 @@ export async function deleteGalleryImageAction(formData: FormData) {
     .from("gallery_images")
     .select("image_path")
     .eq("id", id.data)
+    .eq("album_id", albumId.data)
     .maybeSingle();
+  if (!existing)
+    errorRedirect(
+      `/admin/gallery/${albumId.data}`,
+      "The image could not be found.",
+    );
   const { error } = await supabase
     .from("gallery_images")
     .delete()
-    .eq("id", id.data);
+    .eq("id", id.data)
+    .eq("album_id", albumId.data);
   if (error)
     errorRedirect(
       `/admin/gallery/${albumId.data}`,
@@ -766,15 +1104,31 @@ export async function createPostAction(formData: FormData) {
       "Article content must include supported text or media.",
     );
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("posts")
-    .insert({ ...parsed.data, content, author_id: admin.id });
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "posts",
+    );
+  } catch (error) {
+    errorRedirect("/admin/posts/new", uploadErrorMessage(error));
+  }
+  const post = {
+    ...parsed.data,
+    content,
+    author_id: admin.id,
+    ...(uploadedPath ? { cover_image_path: uploadedPath } : {}),
+  };
+  const { error } = await supabase.from("posts").insert(post);
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       "/admin/posts/new",
       "The article could not be created. Check that its slug is unique.",
     );
-  revalidateContent("posts", parsed.data.slug);
+  revalidateContent("posts", post.slug);
   successRedirect("/admin/posts", "Article created.");
 }
 
@@ -797,15 +1151,46 @@ export async function updatePostAction(formData: FormData) {
   const { id, author_id: ignoredAuthor, ...updates } = parsed.data;
   void ignoredAuthor;
   const supabase = await createClient();
+  const [postResult, mediaResult] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("cover_image_path")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.from("post_media").select("image_path").eq("post_id", id),
+  ]);
+  if (postResult.error || !postResult.data || mediaResult.error)
+    errorRedirect(fallbackPath, "The article could not be found.");
+  let uploadedPath: string | null = null;
+  try {
+    uploadedPath = await uploadImageFromForm(
+      supabase,
+      formData,
+      "cover_image_path",
+      "posts",
+    );
+  } catch (error) {
+    errorRedirect(fallbackPath, uploadErrorMessage(error));
+  }
+  const nextPath = uploadedPath ?? updates.cover_image_path;
   const { error } = await supabase
     .from("posts")
-    .update({ ...updates, content })
-    .eq("id", id);
+    .update({ ...updates, content, cover_image_path: nextPath })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
   if (error)
     errorRedirect(
       fallbackPath,
       "The article could not be saved. Check that its slug is unique.",
     );
+  await Promise.all([
+    cleanupReplacedMedia(supabase, postResult.data.cover_image_path, nextPath),
+    ...(mediaResult.data ?? []).map((media) =>
+      deleteMediaPathIfUnused(supabase, media.image_path),
+    ),
+  ]);
   revalidateContent("posts", updates.slug);
   successRedirect(`/admin/posts/${id}`, "Article saved.");
 }
@@ -816,14 +1201,24 @@ export async function deletePostAction(formData: FormData) {
   if (!parsed.success)
     errorRedirect("/admin/posts", "The article could not be identified.");
   const supabase = await createClient();
-  const { data: existing } = await supabase
-    .from("posts")
-    .select("cover_image_path")
-    .eq("id", parsed.data)
-    .maybeSingle();
+  const [postResult, mediaResult] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("cover_image_path")
+      .eq("id", parsed.data)
+      .maybeSingle(),
+    supabase.from("post_media").select("image_path").eq("post_id", parsed.data),
+  ]);
+  if (postResult.error || !postResult.data || mediaResult.error)
+    errorRedirect("/admin/posts", "The article could not be found.");
   const { error } = await supabase.from("posts").delete().eq("id", parsed.data);
   if (error) errorRedirect("/admin/posts", "The article could not be deleted.");
-  await deleteMediaPathIfUnused(supabase, existing?.cover_image_path);
+  await Promise.all([
+    deleteMediaPathIfUnused(supabase, postResult.data.cover_image_path),
+    ...(mediaResult.data ?? []).map((media) =>
+      deleteMediaPathIfUnused(supabase, media.image_path),
+    ),
+  ]);
   revalidateContent("posts");
   successRedirect("/admin/posts", "Article deleted.");
 }
@@ -906,23 +1301,71 @@ export async function updateSiteSettingsAction(formData: FormData) {
     typeof id === "string" && id.length > 0,
   );
   const supabase = await createClient();
+  const siteImageFields = [
+    { field: "logo_path", folder: "site" },
+    { field: "hero_image_path", folder: "site" },
+    { field: "about_image_path", folder: "site" },
+  ] as const;
 
   if ("id" in source) {
     const parsed = siteSettingsUpdateSchema.safeParse(source);
     if (!parsed.success)
       errorRedirect("/admin/settings", validationMessage(parsed.error.issues));
     const { id: settingId, ...updates } = parsed.data;
+    const { data: existing, error: existingError } = await supabase
+      .from("site_settings")
+      .select("logo_path, hero_image_path, about_image_path")
+      .eq("id", settingId)
+      .eq("settings_key", "default")
+      .maybeSingle();
+    if (existingError || !existing)
+      errorRedirect("/admin/settings", "Settings could not be found.");
+
+    let uploads: Record<string, string> = {};
+    try {
+      uploads = await uploadImageFields(supabase, formData, siteImageFields);
+    } catch (error) {
+      errorRedirect("/admin/settings", uploadErrorMessage(error));
+    }
+    const nextSettings = { ...updates, ...uploads };
     const { error } = await supabase
       .from("site_settings")
-      .update(updates)
+      .update(nextSettings)
       .eq("id", settingId)
-      .eq("settings_key", "default");
+      .eq("settings_key", "default")
+      .select("id")
+      .maybeSingle();
+    if (error)
+      await Promise.all(
+        Object.values(uploads).map((path) =>
+          removeNewUploadAfterFailedWrite(supabase, path),
+        ),
+      );
     if (error) errorRedirect("/admin/settings", "Settings could not be saved.");
+    await Promise.all(
+      siteImageFields.map(({ field }) =>
+        cleanupReplacedMedia(supabase, existing[field], nextSettings[field]),
+      ),
+    );
   } else {
     const parsed = siteSettingsSchema.safeParse(source);
     if (!parsed.success)
       errorRedirect("/admin/settings", validationMessage(parsed.error.issues));
-    const { error } = await supabase.from("site_settings").insert(parsed.data);
+    let uploads: Record<string, string> = {};
+    try {
+      uploads = await uploadImageFields(supabase, formData, siteImageFields);
+    } catch (error) {
+      errorRedirect("/admin/settings", uploadErrorMessage(error));
+    }
+    const { error } = await supabase
+      .from("site_settings")
+      .insert({ ...parsed.data, ...uploads });
+    if (error)
+      await Promise.all(
+        Object.values(uploads).map((path) =>
+          removeNewUploadAfterFailedWrite(supabase, path),
+        ),
+      );
     if (error) errorRedirect("/admin/settings", "Settings could not be saved.");
   }
   revalidateSettings();

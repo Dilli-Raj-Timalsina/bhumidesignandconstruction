@@ -516,6 +516,56 @@ export type Database = {
           },
         ];
       };
+      post_media: {
+        Row: {
+          post_id: string;
+          image_path: string;
+          created_at: string;
+        };
+        Insert: {
+          post_id: string;
+          image_path: string;
+          created_at?: string;
+        };
+        Update: {
+          post_id?: string;
+          image_path?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "post_media_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      media_cleanup_queue: {
+        Row: {
+          path: string;
+          eligible_after: string;
+          last_error: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          path: string;
+          eligible_after?: string;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          path?: string;
+          eligible_after?: string;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       contact_messages: {
         Row: {
           id: string;

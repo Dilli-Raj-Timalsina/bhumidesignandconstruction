@@ -67,7 +67,8 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
 2. In the SQL Editor, run the migration files in order:
    [`20260927000000_initial_schema.sql`](supabase/migrations/20260927000000_initial_schema.sql), then
    [`20260927120000_admin_security_hardening.sql`](supabase/migrations/20260927120000_admin_security_hardening.sql), then
-   [`20260927130000_configured_admin_and_login_rate_limit.sql`](supabase/migrations/20260927130000_configured_admin_and_login_rate_limit.sql).
+   [`20260927130000_configured_admin_and_login_rate_limit.sql`](supabase/migrations/20260927130000_configured_admin_and_login_rate_limit.sql), then
+   [`20260928000000_media_lifecycle.sql`](supabase/migrations/20260928000000_media_lifecycle.sql).
 3. Run [`supabase/seed.sql`](supabase/seed.sql). It seeds the verified company profile, services, five documented projects, albums and captions from the supplied portfolio. Approved portfolio assets are bundled under `public/` for the initial site and can later be replaced through the admin workspace.
 4. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.local`, then run:
 
@@ -112,6 +113,12 @@ Visit `/admin/login`, then use the admin workspace to:
 - update public address, phone, email, and location from `/admin/contact`.
 
 Only published content is visible publicly. The initial portfolio content is source-backed; future changes should remain supported by approved company material.
+
+Images are uploaded only when their form saves successfully. Replaced and deleted
+images are removed from Storage only after every CMS and rich-text reference is
+checked. A failed removal is retained in the protected cleanup queue and retried
+on the next image save; run `npm run media:cleanup` from a trusted scheduled job
+to retry queued removals even when nobody is using the admin workspace.
 
 ## Architecture
 

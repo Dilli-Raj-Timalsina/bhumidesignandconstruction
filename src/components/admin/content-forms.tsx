@@ -46,7 +46,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
   const action = editing ? updateProjectAction : createProjectAction;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} encType="multipart/form-data" className="space-y-5">
       {project ? <input type="hidden" name="id" value={project.id} /> : null}
       <FormLayout>
         <FormSection
@@ -183,7 +183,6 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
               name="cover_image_path"
               value={optional(project?.coverImagePath)}
               previewUrl={publicMediaUrl(project?.coverImagePath)}
-              folder="projects"
               label="Project cover image"
             />
           </div>
@@ -219,7 +218,7 @@ export function ServiceForm({ service }: { service?: AdminService }) {
   const action = editing ? updateServiceAction : createServiceAction;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} encType="multipart/form-data" className="space-y-5">
       {service ? <input type="hidden" name="id" value={service.id} /> : null}
       <FormLayout>
         <FormSection
@@ -301,7 +300,6 @@ export function ServiceForm({ service }: { service?: AdminService }) {
               name="cover_image_path"
               value={optional(service?.coverImagePath)}
               previewUrl={publicMediaUrl(service?.coverImagePath)}
-              folder="services"
               label="Service cover image"
             />
           </div>
@@ -336,7 +334,7 @@ export function GalleryAlbumForm({ album }: { album?: AdminAlbum }) {
   const action = editing ? updateGalleryAlbumAction : createGalleryAlbumAction;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} encType="multipart/form-data" className="space-y-5">
       {album ? <input type="hidden" name="id" value={album.id} /> : null}
       <FormLayout>
         <FormSection
@@ -413,7 +411,6 @@ export function GalleryAlbumForm({ album }: { album?: AdminAlbum }) {
               name="cover_image_path"
               value={optional(album?.coverImagePath)}
               previewUrl={publicMediaUrl(album?.coverImagePath)}
-              folder="gallery"
               label="Album cover image"
             />
           </div>
@@ -432,7 +429,7 @@ export function PostForm({ post }: { post?: AdminPost }) {
   const action = editing ? updatePostAction : createPostAction;
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} encType="multipart/form-data" className="space-y-5">
       {post ? <input type="hidden" name="id" value={post.id} /> : null}
       <FormLayout>
         <FormSection
@@ -516,7 +513,6 @@ export function PostForm({ post }: { post?: AdminPost }) {
               name="cover_image_path"
               value={optional(post?.coverImagePath)}
               previewUrl={publicMediaUrl(post?.coverImagePath)}
-              folder="posts"
               label="Article cover image"
             />
           </div>
