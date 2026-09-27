@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Plus } from "lucide-react";
 
 export function PageHeader({
-  eyebrow = "Administration",
+  eyebrow,
   title,
   description,
   action,
@@ -26,12 +26,14 @@ export function PageHeader({
             <ArrowLeft className="size-3.5" aria-hidden="true" />
             Back
           </Link>
-        ) : (
+        ) : eyebrow ? (
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-bhumi">
             {eyebrow}
           </p>
-        )}
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-ink sm:text-4xl">
+        ) : null}
+        <h1
+          className={`${eyebrow || backHref ? "mt-2" : ""} text-3xl font-semibold tracking-[-0.05em] text-ink sm:text-4xl`}
+        >
           {title}
         </h1>
         {description ? (
