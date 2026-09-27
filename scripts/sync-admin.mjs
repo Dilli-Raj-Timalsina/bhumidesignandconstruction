@@ -16,18 +16,12 @@ function requiredEnvironmentValue(name) {
 function readConfiguredAdmin() {
   const email = requiredEnvironmentValue("ADMIN_EMAIL").toLowerCase();
   const password = process.env.ADMIN_PASSWORD ?? "";
-  const rateLimitSecret = requiredEnvironmentValue("ADMIN_RATE_LIMIT_SECRET");
 
   if (!emailPattern.test(email)) {
     throw new Error("ADMIN_EMAIL must be a valid email address.");
   }
-  if (password.length < 16) {
-    throw new Error("ADMIN_PASSWORD must contain at least 16 characters.");
-  }
-  if (rateLimitSecret.length < 32) {
-    throw new Error(
-      "ADMIN_RATE_LIMIT_SECRET must contain at least 32 characters.",
-    );
+  if (password.length < 8) {
+    throw new Error("ADMIN_PASSWORD must contain at least 8 characters.");
   }
 
   return { email, password };

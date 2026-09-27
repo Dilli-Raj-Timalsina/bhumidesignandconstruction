@@ -45,7 +45,6 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
-ADMIN_RATE_LIMIT_SECRET=
 ```
 
 Use the values from Supabase **Settings → API Keys** as follows:
@@ -54,18 +53,11 @@ Use the values from Supabase **Settings → API Keys** as follows:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the new publishable key (`sb_publishable_...`). The project retains this legacy-compatible variable name.
 - `SUPABASE_SERVICE_ROLE_KEY` — the new secret key (`sb_secret_...`). The project retains this legacy-compatible variable name. It is server-only and is used only by narrowly scoped server operations: contact-message delivery, the durable login limiter, and the explicit admin sync command.
 - `ADMIN_EMAIL` — the single administrator login ID. It must be an email address because Supabase password authentication uses email identities.
-- `ADMIN_PASSWORD` — the single administrator password. Use a unique randomly generated password of at least 16 characters.
-- `ADMIN_RATE_LIMIT_SECRET` — a separate random secret of at least 32 characters. It HMAC-hashes rate-limit keys, so raw client IP addresses and email addresses are never stored in the rate-limit table.
+- `ADMIN_PASSWORD` — the single administrator password. It must be at least 8 characters; choose something you do not reuse elsewhere.
 
 The project does not require the database password, JWKS URL, or duplicate `SUPABASE_URL` variables for normal website operation.
 
-Keep all three `ADMIN_*` values server-only—never use a `NEXT_PUBLIC_` prefix.
-For example, generate a password and independent rate-limit secret with:
-
-```bash
-openssl rand -base64 32
-openssl rand -hex 32
-```
+Keep both `ADMIN_*` values server-only—never use a `NEXT_PUBLIC_` prefix.
 
 For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-domain.example` in Vercel. It is used for metadata, sitemap and robots output.
 
@@ -77,7 +69,7 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
    [`20260927120000_admin_security_hardening.sql`](supabase/migrations/20260927120000_admin_security_hardening.sql), then
    [`20260927130000_configured_admin_and_login_rate_limit.sql`](supabase/migrations/20260927130000_configured_admin_and_login_rate_limit.sql).
 3. Run [`supabase/seed.sql`](supabase/seed.sql). It seeds the verified company profile, services, five documented projects, albums and captions from the supplied portfolio. Approved portfolio assets are bundled under `public/` for the initial site and can later be replaced through the admin workspace.
-4. Set `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_RATE_LIMIT_SECRET` in `.env.local`, then run:
+4. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.local`, then run:
 
    ```bash
    npm run admin:sync

@@ -37,6 +37,12 @@ function subjectHash(
   return `${type}:${digest}`;
 }
 
+function rateLimitSecret(): string {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!secret) throw new Error("The Supabase server key is unavailable.");
+  return secret;
+}
+
 function resultFromRpc(
   data: { allowed: boolean; retry_after_seconds: number }[] | null,
 ): Omit<AdminLoginAttempt, "subjects"> {
@@ -63,21 +69,14 @@ export async function consumeAdminLoginAttempt(
   configured: ConfiguredAdminCredentials,
 ): Promise<AdminLoginAttempt> {
   const requestHeaders = await headers();
-  const subjects = [
-    subjectHash(
-      "ip",
-      clientAddress(requestHeaders),
-      configured.rateLimitSecret,
-    ),
-  ];
+  const secret = rateLimitSecret();
+  const subjects = [subjectHash("ip", clientAddress(requestHeaders), secret)];
 
   // Only create a global account bucket for the configured address. This
   // prevents attackers from filling the rate-limit table with arbitrary
   // email-derived records while still limiting a rotating-IP attack.
   if (isConfiguredAdminEmail(email)) {
-    subjects.push(
-      subjectHash("account", configured.email, configured.rateLimitSecret),
-    );
+    subjects.push(subjectHash("account", configured.email, secret));
   }
 
   const service = createServiceRoleClient();

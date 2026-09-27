@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/components/admin/require-admin";
 import {
   getConfiguredAdminCredentials,
-  hasConfiguredAdminCredentials,
+  hasAdminServerConfiguration,
   isConfiguredAdminEmail,
 } from "@/lib/admin/config";
 import { matchesConfiguredAdminCredentials } from "@/lib/admin/credentials";
@@ -129,7 +129,8 @@ function safeAdminNext(value: FormDataEntryValue | null): string {
 }
 
 function loginRedirect(
-  reason: "configuration" | "credentials" | "rate_limited" | "unavailable",
+  reason:
+    "configuration" | "credentials" | "rate_limited" | "setup" | "unavailable",
   next: FormDataEntryValue | null,
 ): never {
   const search = new URLSearchParams({
@@ -327,7 +328,7 @@ async function deleteAlbumMedia(client: SupabaseClient<Database>, id: string) {
 }
 
 export async function loginAction(formData: FormData) {
-  if (!hasSupabaseEnv() || !hasConfiguredAdminCredentials()) {
+  if (!hasSupabaseEnv() || !hasAdminServerConfiguration()) {
     loginRedirect("configuration", formData.get("next"));
   }
 
@@ -361,27 +362,32 @@ export async function loginAction(formData: FormData) {
   }
 
   let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
+  let setupRequired = false;
   try {
     supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
       email: configured.email,
       password: configured.password,
     });
-    if (error || !data.user)
-      throw new Error("Configured admin sign-in failed.");
-
-    const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
-    if (
-      roleError ||
-      isAdmin !== true ||
-      !data.user.email_confirmed_at ||
-      !isConfiguredAdminEmail(data.user.email)
-    ) {
-      throw new Error("Configured administrator is not synchronized.");
+    if (error || !data.user) {
+      setupRequired = true;
+    } else {
+      const { data: isAdmin, error: roleError } =
+        await supabase.rpc("is_admin");
+      setupRequired =
+        Boolean(roleError) ||
+        isAdmin !== true ||
+        !data.user.email_confirmed_at ||
+        !isConfiguredAdminEmail(data.user.email);
     }
   } catch {
     if (supabase) await supabase.auth.signOut();
     loginRedirect("unavailable", next);
+  }
+
+  if (setupRequired) {
+    await supabase.auth.signOut();
+    loginRedirect("setup", next);
   }
 
   try {

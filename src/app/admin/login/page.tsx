@@ -3,7 +3,10 @@ import { LogIn } from "lucide-react";
 
 import { loginAction } from "@/app/actions/admin";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { hasConfiguredAdminCredentials } from "@/lib/admin/config";
+import {
+  hasAdminServerConfiguration,
+  hasConfiguredAdminCredentials,
+} from "@/lib/admin/config";
 import { hasSupabaseEnv } from "@/lib/supabase/server";
 
 type LoginPageProps = {
@@ -29,22 +32,31 @@ const errors: Record<string, string> = {
   credentials: "We could not sign you in with those credentials.",
   restricted:
     "This account is not authorized to access the administration area.",
-  configuration:
-    "Admin sign-in is unavailable until the server configuration is complete.",
   rate_limited:
     "Too many sign-in attempts. Please wait 15 minutes and try again.",
   unavailable:
     "Admin sign-in is temporarily unavailable. Please try again shortly.",
+  setup:
+    "One setup step remains: run npm run admin:sync after applying the Supabase migration.",
 };
 
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const configured = hasSupabaseEnv() && hasConfiguredAdminCredentials();
+  const hasSupabaseConfiguration = hasSupabaseEnv();
+  const hasAdminCredentials = hasConfiguredAdminCredentials();
+  const configured = hasSupabaseConfiguration && hasAdminServerConfiguration();
+  const configurationMessage = !hasSupabaseConfiguration
+    ? "Add your Supabase URL and publishable key to .env.local, then restart the server."
+    : !hasAdminCredentials
+      ? "Add ADMIN_EMAIL and ADMIN_PASSWORD to .env.local, then restart the server."
+      : "Add SUPABASE_SERVICE_ROLE_KEY to .env.local, then restart the server.";
   const next = safeAdminNext(params.next);
   const error = params.error
     ? (errors[params.error] ?? "We could not sign you in. Please try again.")
     : params.reason
-      ? errors[params.reason]
+      ? params.reason === "configuration"
+        ? configurationMessage
+        : errors[params.reason]
       : undefined;
 
   return (
