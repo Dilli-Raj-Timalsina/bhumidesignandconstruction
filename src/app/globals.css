@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-manrope: "Manrope";
+  --background: 255 255 255;
+  --foreground: 30 30 30;
+  --blue: 41 88 177;
+  --blue-dark: 30 64 133;
+  --line: 228 231 236;
+  --muted: 102 112 133;
+}
+
+* {
+  border-color: rgb(var(--line));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: rgb(var(--background));
+  color: rgb(var(--foreground));
+  font-feature-settings:
+    "ss01" on,
+    "ss02" on;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #d9e5fb;
+  color: #1e4085;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  p {
+    margin: 0;
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    outline-color: #2958b1;
+  }
+
+  :focus-visible {
+    outline: 2px solid #2958b1;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .site-shell {
+    @apply mx-auto w-full max-w-site px-5 md:px-8 xl:px-10;
+  }
+
+  .eyebrow {
+    @apply flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.16em] text-bhumi;
+  }
+
+  .eyebrow::before {
+    @apply h-px w-6 bg-bhumi content-[''];
+  }
+
+  .display-title {
+    @apply text-[clamp(2.6rem,5.2vw,5rem)] font-semibold leading-[0.98] tracking-[-0.055em] text-ink;
+  }
+
+  .section-title {
+    @apply text-[clamp(2rem,3.4vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.045em] text-ink;
+  }
+
+  .prose-bhumi {
+    @apply max-w-none text-base leading-8 text-muted;
+  }
+
+  .prose-bhumi h2 {
+    @apply mt-10 text-3xl font-semibold leading-tight tracking-[-0.03em] text-ink;
+  }
+
+  .prose-bhumi h3 {
+    @apply mt-8 text-xl font-semibold text-ink;
+  }
+
+  .prose-bhumi p,
+  .prose-bhumi ul,
+  .prose-bhumi ol,
+  .prose-bhumi blockquote {
+    @apply mt-5;
+  }
+
+  .prose-bhumi ul,
+  .prose-bhumi ol {
+    @apply ml-5 space-y-2;
+  }
+
+  .prose-bhumi ul {
+    @apply list-disc;
+  }
+
+  .prose-bhumi ol {
+    @apply list-decimal;
+  }
+
+  .prose-bhumi a {
+    @apply underline decoration-bhumi/40 underline-offset-4 transition-colors hover:text-bhumi;
+  }
+
+  .prose-bhumi blockquote {
+    @apply border-l-2 border-bhumi pl-6 text-xl leading-8 text-ink;
+  }
+
+  .blueprint-grid {
+    background-image:
+      linear-gradient(rgba(41, 88, 177, 0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(41, 88, 177, 0.08) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
