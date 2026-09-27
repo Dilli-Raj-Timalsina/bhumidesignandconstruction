@@ -21,7 +21,7 @@ export function ImageUploader({
   onChange,
   folder = "uploads",
   label = "Image",
-  hint = "JPEG, PNG, WebP, or AVIF up to 8 MB.",
+  hint = "Public media: JPEG, PNG, WebP, or AVIF up to 8 MB. Upload approved assets only.",
 }: {
   name: string;
   value?: string;

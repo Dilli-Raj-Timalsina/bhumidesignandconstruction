@@ -17,6 +17,22 @@ const socialLinkNameSchema = z.enum([
   "x",
 ]);
 
+const nullableEmailSchema = z
+  .union([
+    z
+      .string()
+      .trim()
+      .toLowerCase()
+      .email("Enter a valid email address.")
+      .max(254),
+    z.literal(""),
+    z.null(),
+    z.undefined(),
+  ])
+  .transform((value) =>
+    typeof value === "string" && value.length > 0 ? value : null,
+  );
+
 export const socialLinksSchema = z.preprocess(
   (value) => {
     if (value === undefined || value === null || value === "") return {};
@@ -44,21 +60,7 @@ export const siteSettingsSchema = z
     description: nullableText(2_000),
     location: nullableText(240),
     address: nullableText(500),
-    email: z
-      .union([
-        z
-          .string()
-          .trim()
-          .toLowerCase()
-          .email("Enter a valid email address.")
-          .max(254),
-        z.literal(""),
-        z.null(),
-        z.undefined(),
-      ])
-      .transform((value) =>
-        typeof value === "string" && value.length > 0 ? value : null,
-      ),
+    email: nullableEmailSchema,
     phone: nullableText(50),
     logo_path: nullableStoragePathSchema,
     hero_title: nullableText(240),
@@ -77,5 +79,22 @@ export const siteSettingsUpdateSchema = siteSettingsSchema
   .extend({ id: idSchema })
   .strict();
 
+/**
+ * Narrow server-action contract for the dedicated contact-details screen.
+ * It intentionally cannot modify brand, SEO, media, or any other global field.
+ */
+export const contactDetailsUpdateSchema = z
+  .object({
+    id: idSchema,
+    location: nullableText(240),
+    address: nullableText(500),
+    email: nullableEmailSchema,
+    phone: nullableText(50),
+  })
+  .strict();
+
 export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;
 export type SiteSettingsUpdateInput = z.infer<typeof siteSettingsUpdateSchema>;
+export type ContactDetailsUpdateInput = z.infer<
+  typeof contactDetailsUpdateSchema
+>;

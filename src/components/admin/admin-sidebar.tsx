@@ -10,6 +10,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  PhoneCall,
   Settings,
   Wrench,
   X,
@@ -27,6 +28,7 @@ const navigation = [
   { href: "/admin/services", label: "Services", icon: Wrench },
   { href: "/admin/gallery", label: "Gallery", icon: Images },
   { href: "/admin/posts", label: "Insights", icon: BookOpenText },
+  { href: "/admin/contact", label: "Contact details", icon: PhoneCall },
   { href: "/admin/messages", label: "Messages", icon: Mail },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

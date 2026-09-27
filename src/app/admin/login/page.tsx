@@ -6,8 +6,23 @@ import { SubmitButton } from "@/components/admin/submit-button";
 import { hasSupabaseEnv } from "@/lib/supabase/server";
 
 type LoginPageProps = {
-  searchParams: Promise<{ error?: string; reason?: string }>;
+  searchParams: Promise<{ error?: string; reason?: string; next?: string }>;
 };
+
+const adminPathPattern = /^\/admin(?:\/[A-Za-z0-9._~-]+)*$/;
+
+function safeAdminNext(value: string | undefined): string {
+  if (
+    !value ||
+    !adminPathPattern.test(value) ||
+    value.includes("\\") ||
+    value.split("/").some((segment) => segment === "." || segment === "..") ||
+    value === "/admin/login"
+  ) {
+    return "/admin/dashboard";
+  }
+  return value;
+}
 
 const errors: Record<string, string> = {
   credentials: "We could not sign you in with those credentials.",
@@ -20,6 +35,7 @@ const errors: Record<string, string> = {
 export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const configured = hasSupabaseEnv();
+  const next = safeAdminNext(params.next);
   const error = params.error
     ? (errors[params.error] ?? "We could not sign you in. Please try again.")
     : params.reason
@@ -56,6 +72,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
           </p>
         ) : null}
         <form action={loginAction} className="mt-7 space-y-5">
+          <input type="hidden" name="next" value={next} />
           <fieldset
             disabled={!configured}
             className="space-y-5 disabled:cursor-not-allowed disabled:opacity-60"

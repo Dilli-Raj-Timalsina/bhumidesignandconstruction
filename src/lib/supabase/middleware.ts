@@ -74,6 +74,8 @@ export async function updateSession(
 
   if (!protectedAdminPath) return response;
   if (!user) return redirectToLogin(request, response);
+  if (!user.email_confirmed_at)
+    return redirectToLogin(request, response, "restricted");
 
   const { data: profile } = await supabase
     .from("profiles")

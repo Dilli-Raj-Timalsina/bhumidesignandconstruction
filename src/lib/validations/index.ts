@@ -52,9 +52,11 @@ export {
   type ServiceUpdateInput,
 } from "./service";
 export {
+  contactDetailsUpdateSchema,
   siteSettingsSchema,
   siteSettingsUpdateSchema,
   socialLinksSchema,
+  type ContactDetailsUpdateInput,
   type SiteSettingsInput,
   type SiteSettingsUpdateInput,
 } from "./settings";

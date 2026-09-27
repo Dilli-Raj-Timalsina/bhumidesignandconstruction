@@ -11,6 +11,8 @@ import {
   galleryAlbumUpdateSchema,
   galleryImageSchema,
   galleryImageUpdateSchema,
+  contactDetailsUpdateSchema,
+  contactMessageStatusUpdateSchema,
   idSchema,
   postSchema,
   postUpdateSchema,
@@ -23,7 +25,6 @@ import {
   siteSettingsSchema,
   siteSettingsUpdateSchema,
   toFormObject,
-  contactMessageStatusUpdateSchema,
 } from "@/lib/validations";
 import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -51,6 +52,70 @@ const uploadFolders = new Set([
   "site",
   "uploads",
 ]);
+const adminPathPattern = /^\/admin(?:\/[A-Za-z0-9._~-]+)*$/;
+
+function matchesBytes(
+  bytes: Uint8Array,
+  signature: readonly number[],
+  offset = 0,
+): boolean {
+  return signature.every((value, index) => bytes[offset + index] === value);
+}
+
+function containsAscii(bytes: Uint8Array, value: string, offset = 0): boolean {
+  const signature = Array.from(value, (character) => character.charCodeAt(0));
+  for (
+    let index = offset;
+    index <= bytes.length - signature.length;
+    index += 1
+  ) {
+    if (matchesBytes(bytes, signature, index)) return true;
+  }
+  return false;
+}
+
+/**
+ * Browsers can forge a file MIME type. Check the leading bytes before placing
+ * an upload in the public media bucket as a second, server-side control.
+ */
+async function hasMatchingImageSignature(file: File): Promise<boolean> {
+  try {
+    const bytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+    if (file.type === "image/jpeg")
+      return matchesBytes(bytes, [0xff, 0xd8, 0xff]);
+    if (file.type === "image/png")
+      return matchesBytes(
+        bytes,
+        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+      );
+    if (file.type === "image/webp")
+      return (
+        matchesBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
+        matchesBytes(bytes, [0x57, 0x45, 0x42, 0x50], 8)
+      );
+    if (file.type === "image/avif")
+      return (
+        matchesBytes(bytes, [0x66, 0x74, 0x79, 0x70], 4) &&
+        (containsAscii(bytes, "avif", 8) || containsAscii(bytes, "avis", 8))
+      );
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function safeAdminNext(value: FormDataEntryValue | null): string {
+  if (
+    typeof value !== "string" ||
+    !adminPathPattern.test(value) ||
+    value.includes("\\") ||
+    value.split("/").some((segment) => segment === "." || segment === "..") ||
+    value === "/admin/login"
+  ) {
+    return "/admin/dashboard";
+  }
+  return value;
+}
 
 function noticePath(
   path: string,
@@ -274,11 +339,11 @@ export async function loginAction(formData: FormData) {
         .maybeSingle()
     : { data: null };
 
-  if (!profile?.is_admin) {
+  if (!user?.email_confirmed_at || !profile?.is_admin) {
     await supabase.auth.signOut();
     redirect("/admin/login?reason=restricted");
   }
-  redirect("/admin/dashboard");
+  redirect(safeAdminNext(formData.get("next")));
 }
 
 export async function logoutAction() {
@@ -302,6 +367,11 @@ export async function uploadImageAction(
     };
   if (file.size === 0 || file.size > maximumUploadBytes)
     return { ok: false, message: "Image files must be 8 MB or smaller." };
+  if (!(await hasMatchingImageSignature(file)))
+    return {
+      ok: false,
+      message: "The file contents do not match the selected image type.",
+    };
 
   const folder =
     typeof requestedFolder === "string" && uploadFolders.has(requestedFolder)
@@ -791,7 +861,8 @@ export async function updateSiteSettingsAction(formData: FormData) {
     const { error } = await supabase
       .from("site_settings")
       .update(updates)
-      .eq("id", settingId);
+      .eq("id", settingId)
+      .eq("settings_key", "default");
     if (error) errorRedirect("/admin/settings", "Settings could not be saved.");
   } else {
     const parsed = siteSettingsSchema.safeParse(source);
@@ -802,4 +873,30 @@ export async function updateSiteSettingsAction(formData: FormData) {
   }
   revalidateSettings();
   successRedirect("/admin/settings", "Settings saved.");
+}
+
+export async function updateContactDetailsAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = contactDetailsUpdateSchema.safeParse(formRecord(formData));
+  if (!parsed.success)
+    errorRedirect("/admin/contact", validationMessage(parsed.error.issues));
+
+  const { id, ...updates } = parsed.data;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .update(updates)
+    .eq("id", id)
+    .eq("settings_key", "default")
+    .select("id")
+    .maybeSingle();
+
+  if (error || !data)
+    errorRedirect(
+      "/admin/contact",
+      "Contact details could not be saved. Please try again.",
+    );
+
+  revalidateSettings();
+  successRedirect("/admin/contact", "Contact details saved.");
 }

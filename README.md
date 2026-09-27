@@ -53,10 +53,12 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
 ## Supabase setup
 
 1. Create a Supabase project.
-2. In the SQL Editor, run [`supabase/migrations/20260927000000_initial_schema.sql`](supabase/migrations/20260927000000_initial_schema.sql).
+2. In the SQL Editor, run the migration files in order:
+   [`20260927000000_initial_schema.sql`](supabase/migrations/20260927000000_initial_schema.sql), then
+   [`20260927120000_admin_security_hardening.sql`](supabase/migrations/20260927120000_admin_security_hardening.sql).
 3. Run [`supabase/seed.sql`](supabase/seed.sql). It seeds the verified company profile, services, five documented projects, albums and captions from the supplied portfolio. Approved portfolio assets are bundled under `public/` for the initial site and can later be replaced through the admin workspace.
-4. In **Authentication**, create the initial admin user with email/password.
-5. The migration’s profile trigger creates a regular profile automatically. Promote the initial user after signup:
+4. In **Authentication**, create the initial admin user with email/password and confirm its email address.
+5. The migration’s profile trigger creates a regular profile automatically. Promote the initial user only after signup and email confirmation:
 
    ```sql
    update public.profiles
@@ -66,7 +68,21 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
 
 6. Confirm the `media` Storage bucket exists (the migration creates it) and keep its objects public only for content that is intended to appear on the public site.
 
-Do not use the service role key for normal content CRUD. Admin actions use the signed-in SSR session and database policies.
+Do not use the service role key for normal content CRUD. Admin actions use the signed-in SSR session and database policies. The server-only contact endpoint is the sole exception: it uses the key only after validating the request, so direct anonymous database inserts remain disabled.
+
+## Security controls
+
+The protected admin workspace requires a confirmed email and `profiles.is_admin` at the request boundary, in every mutation, and again in database RLS. The hardening migration also removes web-side profile promotion, records global settings changes in an append-only audit table for application roles, closes direct anonymous inquiry inserts, and adds a durable per-email inquiry throttle.
+
+Before a production launch, configure these controls in the Supabase and hosting dashboards as well:
+
+- Disable public signups or use an invite-only admin workflow.
+- Keep email confirmation and password leak protection enabled; configure Supabase CAPTCHA/Turnstile for sign-in and add server-verified Turnstile to public forms.
+- Enrol MFA for every admin account, shorten session/JWT lifetime to your policy, and enable refresh-token reuse protection.
+- Add an edge/WAF rate-limit rule for `/api/contact`; the database throttle limits repeated addresses, while an edge rule provides IP-based protection.
+- Never upload confidential or client-private imagery to the public `media` bucket. Use a private review/staging bucket if that workflow is needed.
+
+The application adds clickjacking, MIME-sniffing, referrer, permissions, and transport-security headers. It also validates uploaded image signatures server-side, but production image scanning/re-encoding can be added later if staff upload from untrusted sources.
 
 ## Content workflow
 
@@ -75,7 +91,8 @@ Visit `/admin/login`, then use the admin workspace to:
 - create, publish, edit and delete projects, services, albums and insights;
 - upload/caption/order approved imagery;
 - review contact messages;
-- update company identity, address and contact details.
+- update company identity and global website content;
+- update public address, phone, email, and location from `/admin/contact`.
 
 Only published content is visible publicly. The initial portfolio content is source-backed; future changes should remain supported by approved company material.
 

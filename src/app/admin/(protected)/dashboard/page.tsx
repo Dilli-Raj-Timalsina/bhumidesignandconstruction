@@ -100,10 +100,10 @@ export default async function DashboardPage() {
             making content visible on the public website.
           </p>
           <Link
-            href="/admin/settings"
+            href="/admin/contact"
             className="mt-5 inline-flex text-sm font-semibold text-bhumi hover:text-bhumi-dark"
           >
-            Review site settings{" "}
+            Review contact details{" "}
             <ArrowUpRight className="ml-1 size-4" aria-hidden="true" />
           </Link>
         </AdminCard>

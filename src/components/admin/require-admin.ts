@@ -20,6 +20,11 @@ export async function requireAdmin(): Promise<AdminIdentity> {
 
   if (!user) redirect("/admin/login");
 
+  if (!user.email_confirmed_at) {
+    await supabase.auth.signOut();
+    redirect("/admin/login?reason=restricted");
+  }
+
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("is_admin")

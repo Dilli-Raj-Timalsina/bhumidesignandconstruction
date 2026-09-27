@@ -142,6 +142,10 @@ export function nullableUrl(maximumLength = 2048) {
         .string()
         .trim()
         .url("Use a full URL including https://.")
+        .refine(
+          (value) => new URL(value).protocol === "https:",
+          "Use an HTTPS URL.",
+        )
         .max(maximumLength),
       z.literal(""),
       z.null(),
