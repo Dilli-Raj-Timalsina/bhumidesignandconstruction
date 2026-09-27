@@ -9,7 +9,8 @@ import { getServices } from "@/features/content/queries";
 
 export const metadata: Metadata = {
   title: "Services",
-  description: "BHUMI civil engineering and construction services.",
+  description:
+    "Turnkey construction, civil and structural works, substation civil works, and supervised design and interior coordination by BHUMI.",
   alternates: { canonical: "/services" },
 };
 
@@ -21,11 +22,11 @@ export default async function ServicesPage() {
         <div className="site-shell">
           <p className="eyebrow">Services</p>
           <h1 className="display-title mt-6 max-w-5xl">
-            Work that moves from intent to execution.
+            Civil construction with a practical point of view.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            BHUMI&apos;s current capabilities are maintained here as the company
-            portfolio is documented.
+            Turnkey residential delivery, civil and structural works, substation
+            civil works, and supervised design and interior coordination.
           </p>
         </div>
       </section>
@@ -33,8 +34,8 @@ export default async function ServicesPage() {
         <div className="site-shell">
           {services.length === 0 ? (
             <ContentEmptyState
-              title="Services are being prepared."
-              detail="Publish service information in the content workspace to introduce BHUMI’s supported capabilities."
+              title="Services are being updated."
+              detail="BHUMI’s supported civil engineering and construction services will appear here shortly."
             />
           ) : (
             <div className="border-t border-line">

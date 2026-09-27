@@ -3,6 +3,14 @@ import { cache } from "react";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/server";
 import { getPublicStorageUrl } from "@/lib/utils";
 
+import {
+  fallbackItems,
+  portfolioFallbackGalleryAlbums,
+  portfolioFallbackPosts,
+  portfolioFallbackProjects,
+  portfolioFallbackServices,
+  portfolioFallbackSite,
+} from "./portfolio";
 import type {
   PublicAlbumImage,
   PublicGalleryAlbum,
@@ -15,23 +23,7 @@ import type {
 
 type Row = Record<string, unknown>;
 
-const fallbackSite: SiteContent = {
-  companyName: "BHUMI DESIGN & CONSTRUCTION PVT. LTD.",
-  shortName: "BHUMI",
-  tagline: "Built with engineering. Delivered with precision.",
-  description:
-    "Civil engineering and construction solutions in Tulsipur, Dang, Nepal.",
-  location: "Tulsipur, Dang, Nepal",
-  address: null,
-  email: null,
-  phone: null,
-  aboutTitle: null,
-  aboutContent: null,
-  logoImage: null,
-  heroImage: null,
-  aboutImage: null,
-  socialLinks: {},
-};
+const fallbackSite = portfolioFallbackSite;
 
 function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value : null;
@@ -190,14 +182,20 @@ function mapSite(row: Row | null): SiteContent {
     tagline: text(row.tagline) ?? fallbackSite.tagline,
     description: text(row.description) ?? fallbackSite.description,
     location: text(row.location) ?? fallbackSite.location,
-    address: text(row.address),
-    email: text(row.email),
-    phone: text(row.phone),
-    aboutTitle: text(row.about_title),
-    aboutContent: text(row.about_content),
-    logoImage: getPublicStorageUrl(text(row.logo_path)),
-    heroImage: getPublicStorageUrl(text(row.hero_image_path)),
-    aboutImage: getPublicStorageUrl(text(row.about_image_path)),
+    address: text(row.address) ?? fallbackSite.address,
+    email: text(row.email) ?? fallbackSite.email,
+    phone: text(row.phone) ?? fallbackSite.phone,
+    aboutTitle: text(row.about_title) ?? fallbackSite.aboutTitle,
+    aboutContent: text(row.about_content) ?? fallbackSite.aboutContent,
+    logoImage:
+      getPublicStorageUrl(text(row.logo_path)) ?? fallbackSite.logoImage,
+    heroTitle: text(row.hero_title) ?? fallbackSite.heroTitle,
+    heroDescription: text(row.hero_description) ?? fallbackSite.heroDescription,
+    heroImage:
+      getPublicStorageUrl(text(row.hero_image_path)) ?? fallbackSite.heroImage,
+    aboutImage:
+      getPublicStorageUrl(text(row.about_image_path)) ??
+      fallbackSite.aboutImage,
     socialLinks:
       typeof social === "object" && social !== null && !Array.isArray(social)
         ? Object.fromEntries(
@@ -206,7 +204,11 @@ function mapSite(row: Row | null): SiteContent {
                 typeof entry[1] === "string",
             ),
           )
-        : {},
+        : fallbackSite.socialLinks,
+    defaultSeoTitle:
+      text(row.default_seo_title) ?? fallbackSite.defaultSeoTitle,
+    defaultSeoDescription:
+      text(row.default_seo_description) ?? fallbackSite.defaultSeoDescription,
   };
 }
 
@@ -233,7 +235,8 @@ export const getSiteContent = cache(async (): Promise<SiteContent> => {
 });
 
 export async function getProjects(limit?: number): Promise<PublicProject[]> {
-  if (!hasSupabaseEnv()) return [];
+  const fallback = fallbackItems(portfolioFallbackProjects, limit);
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     let query = supabase
@@ -243,11 +246,12 @@ export async function getProjects(limit?: number): Promise<PublicProject[]> {
       .order("sort_order", { ascending: true });
     if (limit) query = query.limit(limit);
     const { data, error } = await query;
-    if (error) return [];
-    return (data ?? [])
+    if (error) return fallback;
+    const projects = (data ?? [])
       .map((row) => mapProject(row as unknown as Row))
       .filter((project): project is PublicProject => project !== null);
-  }, []);
+    return projects.length > 0 ? projects : fallback;
+  }, fallback);
 }
 
 export async function getFeaturedProject(): Promise<PublicProject | null> {
@@ -258,7 +262,9 @@ export async function getFeaturedProject(): Promise<PublicProject | null> {
 export async function getProjectBySlug(
   slug: string,
 ): Promise<PublicProject | null> {
-  if (!hasSupabaseEnv()) return null;
+  const fallback =
+    portfolioFallbackProjects.find((project) => project.slug === slug) ?? null;
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -267,13 +273,14 @@ export async function getProjectBySlug(
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle();
-    if (error || !data) return null;
-    return mapProject(data as unknown as Row);
-  }, null);
+    if (error || !data) return fallback;
+    return mapProject(data as unknown as Row) ?? fallback;
+  }, fallback);
 }
 
 export async function getServices(limit?: number): Promise<PublicService[]> {
-  if (!hasSupabaseEnv()) return [];
+  const fallback = fallbackItems(portfolioFallbackServices, limit);
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     let query = supabase
@@ -283,17 +290,19 @@ export async function getServices(limit?: number): Promise<PublicService[]> {
       .order("sort_order", { ascending: true });
     if (limit) query = query.limit(limit);
     const { data, error } = await query;
-    if (error) return [];
-    return (data ?? [])
+    if (error) return fallback;
+    const services = (data ?? [])
       .map((row) => mapService(row as unknown as Row))
       .filter((service): service is PublicService => service !== null);
-  }, []);
+    return services.length > 0 ? services : fallback;
+  }, fallback);
 }
 
 export async function getGalleryAlbums(
   limit?: number,
 ): Promise<PublicGalleryAlbum[]> {
-  if (!hasSupabaseEnv()) return [];
+  const fallback = fallbackItems(portfolioFallbackGalleryAlbums, limit);
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     let query = supabase
@@ -303,15 +312,17 @@ export async function getGalleryAlbums(
       .order("sort_order", { ascending: true });
     if (limit) query = query.limit(limit);
     const { data, error } = await query;
-    if (error) return [];
-    return (data ?? [])
+    if (error) return fallback;
+    const albums = (data ?? [])
       .map((row) => mapAlbum(row as unknown as Row))
       .filter((album): album is PublicGalleryAlbum => album !== null);
-  }, []);
+    return albums.length > 0 ? albums : fallback;
+  }, fallback);
 }
 
 export async function getPosts(limit?: number): Promise<PublicPost[]> {
-  if (!hasSupabaseEnv()) return [];
+  const fallback = fallbackItems(portfolioFallbackPosts, limit);
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     let query = supabase
@@ -321,15 +332,18 @@ export async function getPosts(limit?: number): Promise<PublicPost[]> {
       .order("published_at", { ascending: false });
     if (limit) query = query.limit(limit);
     const { data, error } = await query;
-    if (error) return [];
-    return (data ?? [])
+    if (error) return fallback;
+    const posts = (data ?? [])
       .map((row) => mapPost(row as unknown as Row))
       .filter((post): post is PublicPost => post !== null);
-  }, []);
+    return posts.length > 0 ? posts : fallback;
+  }, fallback);
 }
 
 export async function getPostBySlug(slug: string): Promise<PublicPost | null> {
-  if (!hasSupabaseEnv()) return null;
+  const fallback =
+    portfolioFallbackPosts.find((post) => post.slug === slug) ?? null;
+  if (!hasSupabaseEnv()) return fallback;
   return attempt(async () => {
     const supabase = await createClient();
     const { data, error } = await supabase
@@ -338,9 +352,9 @@ export async function getPostBySlug(slug: string): Promise<PublicPost | null> {
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle();
-    if (error || !data) return null;
-    return mapPost(data as unknown as Row);
-  }, null);
+    if (error || !data) return fallback;
+    return mapPost(data as unknown as Row) ?? fallback;
+  }, fallback);
 }
 
 export function getAllGalleryImages(albums: PublicGalleryAlbum[]) {

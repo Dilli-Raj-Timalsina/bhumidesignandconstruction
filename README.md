@@ -40,7 +40,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
 
-`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are safe to expose because access is constrained by Supabase Row Level Security. `SUPABASE_SERVICE_ROLE_KEY` is server-only; do not prefix it with `NEXT_PUBLIC_`, expose it to a client component, or commit it.
+Use the values from Supabase **Settings → API Keys** as follows:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — the project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the new publishable key (`sb_publishable_...`). The project retains this legacy-compatible variable name.
+- `SUPABASE_SERVICE_ROLE_KEY` — the new secret key (`sb_secret_...`). The project retains this legacy-compatible variable name. It is server-only and must never be exposed to a client component or committed.
+
+The project does not require the database password, JWKS URL, or duplicate `SUPABASE_URL` variables for normal website operation.
 
 For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-domain.example` in Vercel. It is used for metadata, sitemap and robots output.
 
@@ -48,13 +54,13 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
 
 1. Create a Supabase project.
 2. In the SQL Editor, run [`supabase/migrations/20260927000000_initial_schema.sql`](supabase/migrations/20260927000000_initial_schema.sql).
-3. Run [`supabase/seed.sql`](supabase/seed.sql). The seed intentionally contains only supported company identity and editable settings, because the source portfolio/assets were not included with this workspace.
+3. Run [`supabase/seed.sql`](supabase/seed.sql). It seeds the verified company profile, services, five documented projects, albums and captions from the supplied portfolio. Approved portfolio assets are bundled under `public/` for the initial site and can later be replaced through the admin workspace.
 4. In **Authentication**, create the initial admin user with email/password.
-5. In SQL Editor, add that user to `profiles` with `role = 'admin'`. The migration’s profile trigger creates a regular profile automatically; promote it after signup:
+5. The migration’s profile trigger creates a regular profile automatically. Promote the initial user after signup:
 
    ```sql
    update public.profiles
-   set role = 'admin'
+   set is_admin = true
    where id = '<auth-user-uuid>';
    ```
 
@@ -71,7 +77,7 @@ Visit `/admin/login`, then use the admin workspace to:
 - review contact messages;
 - update company identity, address and contact details.
 
-Only published content is visible publicly. Add verified project information and official brand assets before publishing; the project deliberately avoids inventing missing facts, imagery and contact details.
+Only published content is visible publicly. The initial portfolio content is source-backed; future changes should remain supported by approved company material.
 
 ## Architecture
 

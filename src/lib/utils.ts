@@ -14,10 +14,13 @@ export function getPublicStorageUrl(
   bucket = "media",
 ): string | null {
   const objectPath = path?.trim();
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 
-  if (!objectPath || !baseUrl || !bucket.trim()) return null;
+  if (!objectPath || !bucket.trim()) return null;
+  if (objectPath.startsWith("/")) return objectPath;
   if (/^https?:\/\//i.test(objectPath)) return objectPath;
+
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  if (!baseUrl) return null;
 
   try {
     new URL(baseUrl);

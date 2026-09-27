@@ -9,6 +9,8 @@ export const idSchema = z.string().uuid("A valid record id is required.");
 
 const storagePathPattern =
   /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$/;
+const publicAssetPathPattern =
+  /^\/(?:brand|images)\/[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function calendarDateIsValid(value: string): boolean {
@@ -50,8 +52,11 @@ export const slugSchema = z
   .regex(slugPattern, "Use lowercase words separated by single hyphens.");
 
 export const nullableStoragePathSchema = nullableText(1024).refine(
-  (value) => value === null || storagePathPattern.test(value),
-  "Use a Storage object path without a leading slash or parent-directory segments.",
+  (value) =>
+    value === null ||
+    storagePathPattern.test(value) ||
+    publicAssetPathPattern.test(value),
+  "Use a Storage object path or an approved public asset path under /brand or /images.",
 );
 
 export const nullableDateSchema = z

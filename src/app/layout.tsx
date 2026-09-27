@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Civil engineering and construction solutions in Tulsipur, Dang, Nepal.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
   ),
   openGraph: {
     type: "website",

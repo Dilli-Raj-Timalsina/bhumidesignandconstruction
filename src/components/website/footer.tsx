@@ -34,8 +34,8 @@ export function Footer({
         <div>
           <BrandMark logoSrc={logoSrc} />
           <p className="mt-7 max-w-sm text-sm leading-7 text-muted">
-            Civil engineering and construction solutions, shaped with care from
-            concept through execution.
+            Civil engineering and construction solutions for turnkey residential
+            and institutional infrastructure work.
           </p>
         </div>
 

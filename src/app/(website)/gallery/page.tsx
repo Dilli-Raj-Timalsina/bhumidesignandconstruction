@@ -6,7 +6,8 @@ import { getGalleryAlbums } from "@/features/content/queries";
 
 export const metadata: Metadata = {
   title: "Gallery",
-  description: "Project photography from BHUMI Design & Construction.",
+  description:
+    "Portfolio photography and proposal imagery from BHUMI Design & Construction projects in Dang.",
   alternates: { canonical: "/gallery" },
 };
 
@@ -21,7 +22,8 @@ export default async function GalleryPage() {
             The detail is in the work.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            A curated record of project work, organized by album and category.
+            Project photography and proposal imagery, organized by the work
+            documented in BHUMI&apos;s portfolio.
           </p>
         </div>
       </section>
@@ -31,8 +33,8 @@ export default async function GalleryPage() {
             <GalleryBrowser albums={albums} />
           ) : (
             <ContentEmptyState
-              title="The gallery is being prepared."
-              detail="Project photography, alt text and captions can be organized into albums through the content workspace."
+              title="The project gallery is being updated."
+              detail="BHUMI portfolio photography will appear here shortly."
             />
           )}
         </div>

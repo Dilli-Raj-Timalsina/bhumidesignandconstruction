@@ -3,10 +3,6 @@ import Image from "next/image";
 
 import { cn } from "@/lib/utils";
 
-/**
- * A neutral wordmark fallback. Replace its contents with the supplied Bhumi logo
- * when the source asset is available in public/brand.
- */
 export function BrandMark({
   className,
   href = "/",
@@ -18,37 +14,22 @@ export function BrandMark({
   logoSrc?: string | null;
   priority?: boolean;
 }) {
+  const source = logoSrc || "/brand/bhumi-wordmark.png";
+
   return (
     <Link
       href={href}
       aria-label="BHUMI home"
       className={cn("group inline-flex items-stretch gap-2.5", className)}
     >
-      {logoSrc ? (
-        <Image
-          src={logoSrc}
-          alt="BHUMI"
-          width={200}
-          height={56}
-          className="h-10 w-auto object-contain object-left"
-          priority={priority}
-        />
-      ) : (
-        <>
-          <span
-            className="w-1 bg-bhumi transition-transform duration-200 group-hover:scale-y-110"
-            aria-hidden="true"
-          />
-          <span className="flex flex-col leading-none">
-            <span className="text-[17px] font-bold tracking-[0.16em] text-ink">
-              BHUMI
-            </span>
-            <span className="mt-1 text-[8px] font-bold tracking-[0.13em] text-muted">
-              DESIGN + CONSTRUCTION
-            </span>
-          </span>
-        </>
-      )}
+      <Image
+        src={source}
+        alt="BHUMI Design & Construction"
+        width={1080}
+        height={1080}
+        className="h-[50px] w-[190px] object-cover object-center transition-transform duration-200 group-hover:scale-[1.015] sm:h-[54px] sm:w-[204px]"
+        priority={priority}
+      />
     </Link>
   );
 }

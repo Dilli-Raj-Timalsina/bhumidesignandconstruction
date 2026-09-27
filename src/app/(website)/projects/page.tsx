@@ -8,7 +8,8 @@ import { getProjects } from "@/features/content/queries";
 
 export const metadata: Metadata = {
   title: "Projects",
-  description: "Selected project work by BHUMI Design & Construction.",
+  description:
+    "Current and completed civil engineering and construction projects by BHUMI Design & Construction.",
   alternates: { canonical: "/projects" },
 };
 
@@ -20,11 +21,11 @@ export default async function ProjectsPage() {
         <div className="site-shell">
           <p className="eyebrow">Projects</p>
           <h1 className="display-title mt-6 max-w-5xl">
-            A body of work built with care.
+            Current work. Completed work. Built with care.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            Project case studies are published as their verified information and
-            photography are ready to share.
+            A documented portfolio of substation, residential, and structural
+            construction work across Dang.
           </p>
         </div>
       </section>
@@ -38,8 +39,8 @@ export default async function ProjectsPage() {
             </div>
           ) : (
             <ContentEmptyState
-              title="Projects will be published here."
-              detail="Add validated project information, photography and project scope through the admin workspace."
+              title="Project records are being updated."
+              detail="Verified project details and portfolio photography will appear here shortly."
             />
           )}
           <ButtonLink href="/contact" variant="text" className="mt-12">

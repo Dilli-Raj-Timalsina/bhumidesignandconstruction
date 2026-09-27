@@ -10,9 +10,13 @@ export type SiteContent = {
   aboutTitle: string | null;
   aboutContent: string | null;
   logoImage: string | null;
+  heroTitle: string | null;
+  heroDescription: string | null;
   heroImage: string | null;
   aboutImage: string | null;
   socialLinks: Record<string, string>;
+  defaultSeoTitle: string | null;
+  defaultSeoDescription: string | null;
 };
 
 export type PublicProject = {

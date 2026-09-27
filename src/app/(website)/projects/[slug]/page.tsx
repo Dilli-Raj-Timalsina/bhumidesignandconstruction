@@ -109,9 +109,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             {project.description && (
               <>
                 <p className="eyebrow">Overview</p>
-                <h2 className="section-title mt-5">
-                  The brief, brought to life.
-                </h2>
+                <h2 className="section-title mt-5">Project overview.</h2>
                 <p className="mt-7 max-w-3xl whitespace-pre-line text-base leading-8 text-muted">
                   {project.description}
                 </p>
@@ -127,7 +125,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
             )}
             {project.executionDetails && (
               <div className="mt-14 border-t border-line pt-8">
-                <p className="eyebrow">Execution details</p>
+                <p className="eyebrow">Portfolio execution snapshot</p>
                 <p className="mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-muted">
                   {project.executionDetails}
                 </p>
@@ -159,7 +157,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
         <section className="border-y border-line bg-canvas py-16 md:py-24">
           <div className="site-shell">
             <p className="eyebrow">Project gallery</p>
-            <h2 className="section-title mt-5">In detail.</h2>
+            <h2 className="section-title mt-5">Documented on site.</h2>
             <div className="mt-10">
               <GalleryGrid images={project.images} />
             </div>

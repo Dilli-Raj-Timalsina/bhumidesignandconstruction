@@ -45,14 +45,16 @@ export default async function HomePage() {
         <div className="site-shell grid min-h-[min(780px,calc(100svh-76px))] gap-10 py-10 md:grid-cols-[minmax(0,0.96fr)_minmax(380px,1.04fr)] md:py-12 xl:gap-20">
           <div className="flex flex-col justify-between py-2 md:py-8">
             <div className="animate-soft-rise">
-              <p className="eyebrow">Civil engineering + construction</p>
+              <p className="eyebrow">
+                {site.heroTitle || "Civil engineering + construction"}
+              </p>
               <h1 className="display-title mt-7 max-w-3xl">
                 Built with engineering.
                 <br />
                 Delivered with precision.
               </h1>
               <p className="mt-7 max-w-xl text-base leading-8 text-muted md:text-lg">
-                {site.description}
+                {site.heroDescription || site.description}
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <ButtonLink href="/projects">
@@ -73,11 +75,11 @@ export default async function HomePage() {
           <div className="relative min-h-[390px] overflow-hidden md:min-h-0">
             <MediaFrame
               src={site.heroImage}
-              alt="BHUMI project site"
+              alt="BHUMI substation construction work"
               className="absolute inset-0 h-full w-full"
               priority
               sizes="(max-width: 768px) 100vw, 52vw"
-              label="Add BHUMI project photography"
+              label="BHUMI project work"
             />
             <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between bg-white/90 px-5 py-4 backdrop-blur-sm md:px-6">
               <div>
@@ -85,7 +87,7 @@ export default async function HomePage() {
                   BHUMI
                 </p>
                 <p className="mt-1 text-xs font-medium text-ink">
-                  Design with intent. Build with clarity.
+                  {site.location || "Tulsipur, Dang, Nepal"}
                 </p>
               </div>
               <span className="hidden h-9 w-9 border border-line bg-white sm:block" />
@@ -100,25 +102,25 @@ export default async function HomePage() {
             <p className="eyebrow self-start">Our practice</p>
             <div>
               <p className="max-w-3xl text-[clamp(1.7rem,3vw,2.8rem)] font-semibold leading-[1.18] tracking-[-0.045em] text-ink">
-                A modern practice for civil engineering and construction
-                solutions.
+                A Tulsipur-based civil engineering and construction contractor
+                for turnkey residential and institutional infrastructure work.
               </p>
               <div className="mt-10 grid border-t border-line sm:grid-cols-3">
                 {[
                   [
                     "01",
-                    "Engineering-led",
-                    "Technical thinking anchors every stage of the work.",
+                    "Civil engineering-led",
+                    "Founded and led by Er. Shashiram Nakal, a Pulchowk Campus civil engineering graduate.",
                   ],
                   [
                     "02",
                     "Built to execute",
-                    "Design intent stays close to construction reality.",
+                    "Civil and structural work spanning RCC, masonry, foundations, and substation civil works.",
                   ],
                   [
                     "03",
-                    "Project focused",
-                    "Clear coordination from planning through delivery.",
+                    "On-site capacity",
+                    "Three site supervisors / overseers and approximately 40 workers across running sites.",
                   ],
                 ].map(([number, title, description]) => (
                   <div
@@ -147,20 +149,20 @@ export default async function HomePage() {
           <div className="relative min-h-[380px] md:min-h-[530px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI work"
+              alt="BHUMI completed structure work in Dang"
               className="absolute inset-0 h-full w-full"
-              label="Add a BHUMI site image"
+              label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 45vw"
             />
           </div>
           <div className="flex flex-col justify-center py-2">
             <p className="eyebrow">About BHUMI</p>
             <h2 className="section-title mt-5 max-w-xl">
-              Design discipline. Construction perspective.
+              Turnkey delivery, grounded in engineering.
             </h2>
             <p className="mt-6 max-w-xl text-base leading-8 text-muted">
               {site.aboutContent ||
-                "BHUMI DESIGN & CONSTRUCTION PVT. LTD. is a civil engineering and construction practice based in Tulsipur, Dang, Nepal. Its company profile and project story can be managed here as the portfolio develops."}
+                "BHUMI Design and Construction Pvt. Ltd. is a civil engineering and construction contracting company based in Tulsipur, Dang, Nepal, focused on turnkey and civil contracting work for private residential clients and institutional infrastructure projects."}
             </p>
             <ButtonLink href="/about" variant="text" className="mt-8 w-fit">
               About Bhumi <ArrowUpRight size={16} />
@@ -180,7 +182,7 @@ export default async function HomePage() {
                 Confident execution.
               </>
             }
-            description="Services are managed in the CMS, so the work shown here remains current as BHUMI's portfolio evolves."
+            description="BHUMI’s documented capabilities span turnkey construction, civil and structural works, substation civil works, and supervised design and interior coordination."
           />
           <div className="mt-10 md:mt-14">
             {services.length > 0 ? (
@@ -203,7 +205,9 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
               <p className="eyebrow">Selected work</p>
-              <h2 className="section-title mt-5">The work speaks clearly.</h2>
+              <h2 className="section-title mt-5">
+                Work in progress. Work delivered.
+              </h2>
             </div>
             <ButtonLink href="/projects" variant="text">
               All projects <ArrowUpRight size={16} />
@@ -283,7 +287,7 @@ export default async function HomePage() {
             ) : (
               <ContentEmptyState
                 title="No insights published yet."
-                detail="Published articles will be shown here when they are ready to share."
+                detail="The supplied portfolio contains project records rather than standalone articles. Future approved updates will appear here."
               />
             )}
           </div>

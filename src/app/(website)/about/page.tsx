@@ -10,7 +10,7 @@ import { getSiteContent } from "@/features/content/queries";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "About BHUMI Design & Construction, a civil engineering and construction practice in Tulsipur, Dang, Nepal.",
+    "BHUMI Design & Construction is a Tulsipur-based civil engineering and construction contracting company.",
   alternates: { canonical: "/about" },
 };
 
@@ -18,18 +18,18 @@ export default async function AboutPage() {
   const site = await getSiteContent();
   const narrative =
     site.aboutContent ||
-    "BHUMI DESIGN & CONSTRUCTION PVT. LTD. is a civil engineering and construction practice based in Tulsipur, Dang, Nepal. As the company portfolio grows, its complete story, team and project approach can be maintained here through the site workspace.";
+    "BHUMI Design and Construction Pvt. Ltd. is a civil engineering and construction contracting company based in Tulsipur, Dang, Nepal, founded and led by Er. Shashiram Nakal. The company focuses on turnkey and civil contracting work for private residential clients and institutional infrastructure projects.";
   return (
     <>
       <section className="border-b border-line bg-canvas py-16 md:py-24">
         <div className="site-shell">
           <p className="eyebrow">About BHUMI</p>
           <h1 className="display-title mt-6 max-w-5xl">
-            Design and construction, considered as one.
+            Engineering-led construction, from foundation to finish.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            A civil engineering and construction practice in Tulsipur, Dang,
-            Nepal.
+            A Tulsipur-based contractor for turnkey residential work and
+            institutional civil infrastructure.
           </p>
         </div>
       </section>
@@ -39,16 +39,16 @@ export default async function AboutPage() {
           <div className="relative min-h-[430px] lg:min-h-[620px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI work"
+              alt="BHUMI completed structure work in Dang"
               className="absolute inset-0 h-full w-full"
-              label="Add company or site photography"
+              label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 55vw"
             />
           </div>
           <div className="flex flex-col justify-center">
             <p className="eyebrow">The practice</p>
             <h2 className="section-title mt-5">
-              Engineering perspective, construction focus.
+              {site.aboutTitle || "Turnkey delivery, grounded in engineering."}
             </h2>
             <div className="mt-7 max-w-xl whitespace-pre-line text-base leading-8 text-muted">
               {narrative}
@@ -63,32 +63,37 @@ export default async function AboutPage() {
       <section className="border-y border-line bg-canvas py-16 md:py-28">
         <div className="site-shell">
           <SectionHeading
-            eyebrow="How we work"
+            eyebrow="Current capacity"
             title={
               <>
-                Clear thinking at
+                Built for active,
                 <br />
-                every stage.
+                on-site delivery.
               </>
             }
-            description="Company-specific process details can be added through the site settings as the portfolio and operating approach are documented."
+            description="Organizational capacity as documented in BHUMI’s current company portfolio."
           />
-          <div className="mt-12 grid gap-px bg-line md:grid-cols-3">
+          <div className="mt-12 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
             {[
               [
                 "01",
-                "Understand",
-                "Define the brief, site context and project requirements.",
+                "Er. Shashiram Nakal",
+                "Founder / MD / CEO; civil engineering graduate of Pulchowk Campus, Institute of Engineering.",
               ],
               [
                 "02",
-                "Coordinate",
-                "Bring design intent and construction planning into view together.",
+                "3 site supervisors / overseers",
+                "Currently deployed across active sites.",
               ],
               [
                 "03",
-                "Deliver",
-                "Keep attention on execution, quality and practical outcomes.",
+                "Approx. 40 workers",
+                "Across running sites in the portfolio snapshot.",
+              ],
+              [
+                "04",
+                "6 running sites",
+                "Current active-site count documented in BHUMI’s company portfolio.",
               ],
             ].map(([number, title, copy]) => (
               <article key={number} className="bg-canvas p-7 md:p-8">

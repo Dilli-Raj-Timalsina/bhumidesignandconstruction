@@ -52,11 +52,11 @@ export default async function ContactPage() {
         <div className="site-shell">
           <p className="eyebrow">Contact</p>
           <h1 className="display-title mt-6 max-w-5xl">
-            Let&apos;s discuss how we can build it.
+            Let&apos;s discuss your project.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            Tell us about your project. The BHUMI team will respond through the
-            contact details you provide.
+            Reach BHUMI in Tulsipur, Dang for civil engineering and construction
+            requirements.
           </p>
         </div>
       </section>
@@ -64,12 +64,10 @@ export default async function ContactPage() {
         <div className="site-shell grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(430px,1.2fr)] lg:gap-24">
           <div>
             <p className="eyebrow">Start a conversation</p>
-            <h2 className="section-title mt-5">
-              A good project starts with a clear brief.
-            </h2>
+            <h2 className="section-title mt-5">Start with the scope.</h2>
             <p className="mt-6 max-w-md text-base leading-8 text-muted">
-              Use the form to share your project requirements. Contact details
-              and location are managed through site settings.
+              Share your requirements and the team will respond using the
+              details below.
             </p>
             <div className="mt-10 space-y-6">
               {contacts.map(({ icon: Icon, label, value, href }) => (
@@ -99,7 +97,7 @@ export default async function ContactPage() {
             </div>
             <div className="blueprint-grid relative mt-12 min-h-[190px] overflow-hidden border border-bhumi/15 bg-bhumi-light/30">
               <span className="absolute bottom-5 left-5 text-[10px] font-bold uppercase tracking-[0.14em] text-bhumi">
-                Tulsipur, Dang, Nepal
+                {site.location || "Tulsipur, Dang, Nepal"}
               </span>
             </div>
           </div>

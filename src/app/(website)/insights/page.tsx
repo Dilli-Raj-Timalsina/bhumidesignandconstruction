@@ -6,7 +6,7 @@ import { getPosts } from "@/features/content/queries";
 
 export const metadata: Metadata = {
   title: "Insights",
-  description: "Notes and perspectives from BHUMI Design & Construction.",
+  description: "Project updates and notes from BHUMI Design & Construction.",
   alternates: { canonical: "/insights" },
 };
 
@@ -18,10 +18,11 @@ export default async function InsightsPage() {
         <div className="site-shell">
           <p className="eyebrow">Insights</p>
           <h1 className="display-title mt-6 max-w-5xl">
-            Notes from the practice.
+            Updates from the work.
           </h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            Updates, observations and project perspectives from BHUMI.
+            BHUMI will share project updates and construction notes here as they
+            are approved for publication.
           </p>
         </div>
       </section>
@@ -36,7 +37,7 @@ export default async function InsightsPage() {
           ) : (
             <ContentEmptyState
               title="No insights published yet."
-              detail="Published articles will appear here when BHUMI is ready to share them."
+              detail="The supplied portfolio contains project records rather than standalone articles. Future approved updates will appear here."
             />
           )}
         </div>
