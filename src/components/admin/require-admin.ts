@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
 
+import {
+  hasConfiguredAdminCredentials,
+  isConfiguredAdminEmail,
+} from "@/lib/admin/config";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/server";
 
 export type AdminIdentity = {
@@ -12,7 +16,9 @@ export type AdminIdentity = {
  * Authentication alone is intentionally not enough for CMS access.
  */
 export async function requireAdmin(): Promise<AdminIdentity> {
-  if (!hasSupabaseEnv()) redirect("/admin/login?reason=configuration");
+  if (!hasSupabaseEnv() || !hasConfiguredAdminCredentials()) {
+    redirect("/admin/login?reason=configuration");
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,7 +26,7 @@ export async function requireAdmin(): Promise<AdminIdentity> {
 
   if (!user) redirect("/admin/login");
 
-  if (!user.email_confirmed_at) {
+  if (!user.email_confirmed_at || !isConfiguredAdminEmail(user.email)) {
     await supabase.auth.signOut();
     redirect("/admin/login?reason=restricted");
   }

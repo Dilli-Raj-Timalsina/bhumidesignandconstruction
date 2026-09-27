@@ -69,6 +69,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      admin_access_config: {
+        Row: {
+          settings_key: string;
+          admin_user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          settings_key?: string;
+          admin_user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          settings_key?: string;
+          admin_user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      admin_login_rate_limits: {
+        Row: {
+          subject_key: string;
+          attempt_count: number;
+          window_started_at: string;
+          locked_until: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          subject_key: string;
+          attempt_count?: number;
+          window_started_at?: string;
+          locked_until?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          subject_key?: string;
+          attempt_count?: number;
+          window_started_at?: string;
+          locked_until?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       site_settings: {
         Row: {
           id: string;
@@ -510,6 +555,22 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      clear_admin_login_attempts: {
+        Args: { p_subjects: string[] };
+        Returns: undefined;
+      };
+      configured_admin_user_id: {
+        Args: { p_email: string };
+        Returns: string | null;
+      };
+      configure_configured_admin_access: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      consume_admin_login_attempt: {
+        Args: { p_subjects: string[] };
+        Returns: { allowed: boolean; retry_after_seconds: number }[];
+      };
       is_admin: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

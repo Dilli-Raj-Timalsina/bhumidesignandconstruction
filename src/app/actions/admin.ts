@@ -5,6 +5,17 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/components/admin/require-admin";
+import {
+  getConfiguredAdminCredentials,
+  hasConfiguredAdminCredentials,
+  isConfiguredAdminEmail,
+} from "@/lib/admin/config";
+import { matchesConfiguredAdminCredentials } from "@/lib/admin/credentials";
+import {
+  clearAdminLoginAttempts,
+  consumeAdminLoginAttempt,
+  type AdminLoginAttempt,
+} from "@/lib/admin/login-rate-limit";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/server";
 import {
   galleryAlbumSchema,
@@ -115,6 +126,17 @@ function safeAdminNext(value: FormDataEntryValue | null): string {
     return "/admin/dashboard";
   }
   return value;
+}
+
+function loginRedirect(
+  reason: "configuration" | "credentials" | "rate_limited" | "unavailable",
+  next: FormDataEntryValue | null,
+): never {
+  const search = new URLSearchParams({
+    reason,
+    next: safeAdminNext(next),
+  });
+  redirect(`/admin/login?${search.toString()}`);
 }
 
 function noticePath(
@@ -305,7 +327,10 @@ async function deleteAlbumMedia(client: SupabaseClient<Database>, id: string) {
 }
 
 export async function loginAction(formData: FormData) {
-  if (!hasSupabaseEnv()) redirect("/admin/login?reason=configuration");
+  if (!hasSupabaseEnv() || !hasConfiguredAdminCredentials()) {
+    loginRedirect("configuration", formData.get("next"));
+  }
+
   const email = formData.get("email");
   const password = formData.get("password");
   if (
@@ -314,36 +339,59 @@ export async function loginAction(formData: FormData) {
     !email.trim() ||
     !password
   ) {
-    errorRedirect("/admin/login", "Enter your email and password.");
+    loginRedirect("credentials", formData.get("next"));
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
-  if (error)
-    errorRedirect(
-      "/admin/login",
-      "We could not sign you in with those credentials.",
-    );
+  const next = formData.get("next");
+  const normalizedEmail = email.trim().toLowerCase();
+  const configured = getConfiguredAdminCredentials();
+  let attempt: AdminLoginAttempt;
+  try {
+    attempt = await consumeAdminLoginAttempt(normalizedEmail, configured);
+  } catch {
+    // Fail closed if the durable limiter cannot be reached.
+    loginRedirect("unavailable", next);
+  }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = user
-    ? await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .maybeSingle()
-    : { data: null };
+  if (!attempt.allowed) loginRedirect("rate_limited", next);
+  if (
+    !matchesConfiguredAdminCredentials(normalizedEmail, password, configured)
+  ) {
+    loginRedirect("credentials", next);
+  }
 
-  if (!user?.email_confirmed_at || !profile?.is_admin) {
+  let supabase: Awaited<ReturnType<typeof createClient>> | null = null;
+  try {
+    supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: configured.email,
+      password: configured.password,
+    });
+    if (error || !data.user)
+      throw new Error("Configured admin sign-in failed.");
+
+    const { data: isAdmin, error: roleError } = await supabase.rpc("is_admin");
+    if (
+      roleError ||
+      isAdmin !== true ||
+      !data.user.email_confirmed_at ||
+      !isConfiguredAdminEmail(data.user.email)
+    ) {
+      throw new Error("Configured administrator is not synchronized.");
+    }
+  } catch {
+    if (supabase) await supabase.auth.signOut();
+    loginRedirect("unavailable", next);
+  }
+
+  try {
+    await clearAdminLoginAttempts(attempt.subjects);
+  } catch {
     await supabase.auth.signOut();
-    redirect("/admin/login?reason=restricted");
+    loginRedirect("unavailable", next);
   }
-  redirect(safeAdminNext(formData.get("next")));
+
+  redirect(safeAdminNext(next));
 }
 
 export async function logoutAction() {

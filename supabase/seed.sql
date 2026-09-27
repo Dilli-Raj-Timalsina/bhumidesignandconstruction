@@ -608,5 +608,5 @@ where not exists (
     and image.image_path = source.image_path
 );
 
--- Create an admin after creating the account in Supabase Auth:
--- update public.profiles set is_admin = true where id = '<auth-user-uuid>';
+-- Create or rotate the CMS administrator with `npm run admin:sync` after the
+-- migrations have been applied. Do not manually promote profile rows.

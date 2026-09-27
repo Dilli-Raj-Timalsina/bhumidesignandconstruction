@@ -3,6 +3,11 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/types/database";
 
+import {
+  hasConfiguredAdminCredentials,
+  isConfiguredAdminEmail,
+} from "@/lib/admin/config";
+
 import { getSupabaseConfig, hasSupabaseEnv } from "./config";
 
 const ADMIN_LOGIN_PATH = "/admin/login";
@@ -43,7 +48,7 @@ export async function updateSession(
   let response = NextResponse.next({ request });
   const protectedAdminPath = isProtectedAdminPath(request.nextUrl.pathname);
 
-  if (!hasSupabaseEnv()) {
+  if (!hasSupabaseEnv() || !hasConfiguredAdminCredentials()) {
     if (protectedAdminPath && process.env.NODE_ENV === "production") {
       return redirectToLogin(request, response, "configuration");
     }
@@ -74,7 +79,7 @@ export async function updateSession(
 
   if (!protectedAdminPath) return response;
   if (!user) return redirectToLogin(request, response);
-  if (!user.email_confirmed_at)
+  if (!user.email_confirmed_at || !isConfiguredAdminEmail(user.email))
     return redirectToLogin(request, response, "restricted");
 
   const { data: profile } = await supabase
