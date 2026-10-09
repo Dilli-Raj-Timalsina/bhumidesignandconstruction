@@ -11,6 +11,7 @@ import {
   portfolioFallbackServices,
   portfolioFallbackSite,
 } from "./portfolio";
+import { resolveHeroImagePath } from "./hero-image";
 import type {
   PublicAlbumImage,
   PublicGalleryAlbum,
@@ -191,8 +192,9 @@ function mapSite(row: Row | null): SiteContent {
       getPublicStorageUrl(text(row.logo_path)) ?? fallbackSite.logoImage,
     heroTitle: text(row.hero_title) ?? fallbackSite.heroTitle,
     heroDescription: text(row.hero_description) ?? fallbackSite.heroDescription,
-    heroImage:
-      getPublicStorageUrl(text(row.hero_image_path)) ?? fallbackSite.heroImage,
+    heroImage: getPublicStorageUrl(
+      resolveHeroImagePath(text(row.hero_image_path)),
+    ),
     aboutImage:
       getPublicStorageUrl(text(row.about_image_path)) ??
       fallbackSite.aboutImage,

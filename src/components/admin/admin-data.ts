@@ -1,3 +1,4 @@
+import { defaultHeroImagePath } from "@/features/content/hero-image";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
@@ -451,7 +452,7 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     logoPath: source ? text(source.logo_path) : null,
     heroTitle: source ? text(source.hero_title) : null,
     heroDescription: source ? text(source.hero_description) : null,
-    heroImagePath: source ? text(source.hero_image_path) : null,
+    heroImagePath: source ? text(source.hero_image_path) : defaultHeroImagePath,
     aboutImagePath: source ? text(source.about_image_path) : null,
     aboutTitle: source ? text(source.about_title) : null,
     aboutContent: source ? text(source.about_content) : null,

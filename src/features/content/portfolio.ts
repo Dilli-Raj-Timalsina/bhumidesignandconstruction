@@ -7,6 +7,7 @@ import type {
   PublicService,
   SiteContent,
 } from "./types";
+import { defaultHeroImagePath } from "./hero-image";
 
 /**
  * Portfolio-backed content used when the CMS has not been configured or has no
@@ -276,10 +277,10 @@ export const portfolioFallbackSite: SiteContent = {
   aboutContent:
     "Bhumi Design and Construction Pvt. Ltd. is a civil engineering and construction contracting company based in Tulsipur, Dang, Nepal. It is founded and led by Er. Shashiram Nakal, a civil engineering graduate of Pulchowk Campus, Institute of Engineering.\n\nThe company undertakes turnkey and civil contracting works for private residential clients and institutional infrastructure projects, including EIB-financed substation construction under Nepal Electricity Authority's grid expansion program. The portfolio records three site supervisors or overseers across active sites, approximately 40 workers across running sites, and six active sites.\n\nCore competency includes civil and structural works — RCC, masonry, foundation and substation civil works. Design and interior works are executed through vetted specialist partners or subcontractors under BHUMI's supervision.\n\nRegistration No. 376577/82/83 · PAN/VAT No. 622458940",
   logoImage: "/brand/bhumi-wordmark.png",
-  heroTitle: "Civil Engineering & Construction Solutions",
+  heroTitle: "Built with engineering. Delivered with precision.",
   heroDescription:
     "Turnkey and civil contracting works for private residential clients and institutional infrastructure projects.",
-  heroImage: "/images/portfolio/murkuti-crb-shuttering-site.png",
+  heroImage: defaultHeroImagePath,
   aboutImage: "/images/portfolio/hari-pariyar-complete.jpg",
   socialLinks: {},
   defaultSeoTitle:

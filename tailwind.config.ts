@@ -27,9 +27,14 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "scroll-cue": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(4px)" },
+        },
       },
       animation: {
         "soft-rise": "soft-rise 650ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "scroll-cue": "scroll-cue 1.8s ease-in-out infinite",
       },
     },
   },

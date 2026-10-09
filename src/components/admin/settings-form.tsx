@@ -1,4 +1,5 @@
 import { updateSiteSettingsAction } from "@/app/actions/admin";
+import { resolveHeroImagePath } from "@/features/content/hero-image";
 
 import type { AdminSettings } from "./admin-data";
 import {
@@ -135,10 +136,15 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           rows={4}
         />
         <ImageUploader
+          key={settings.heroImagePath ?? "empty"}
           name="hero_image_path"
           value={optional(settings.heroImagePath)}
-          previewUrl={publicMediaUrl(settings.heroImagePath)}
-          label="Hero image"
+          previewUrl={publicMediaUrl(
+            resolveHeroImagePath(settings.heroImagePath),
+          )}
+          label="Homepage hero photo"
+          clearLabel="Remove photo"
+          hint="Use an approved wide project photo. Replace or remove it here, then save changes. Without a photo, the hero has a charcoal background."
         />
         <ImageUploader
           name="about_image_path"

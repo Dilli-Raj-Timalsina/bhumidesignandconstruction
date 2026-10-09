@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowDownRight, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { ArrowDown, ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { ContentEmptyState } from "@/components/website/empty-content";
@@ -38,62 +38,72 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="border-b border-line bg-white">
-        <div className="site-shell grid min-h-[min(780px,calc(100svh-76px))] gap-10 py-10 md:grid-cols-[minmax(0,0.96fr)_minmax(380px,1.04fr)] md:py-12 xl:gap-20">
-          <div className="flex flex-col justify-between py-2 md:py-8">
-            <div className="animate-soft-rise">
-              <p className="eyebrow">
-                {site.heroTitle || "Civil engineering + construction"}
-              </p>
-              <h1 className="display-title mt-7 max-w-3xl">
-                Built with engineering.
-                <br />
-                Delivered with precision.
-              </h1>
-              <p className="mt-7 max-w-xl text-base leading-8 text-muted md:text-lg">
-                {site.heroDescription || site.description}
-              </p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <ButtonLink href="/projects">
-                  View projects <ArrowUpRight size={17} />
-                </ButtonLink>
-                <ButtonLink href="/contact" variant="outline">
-                  Contact us
-                </ButtonLink>
-              </div>
-            </div>
-            <div className="mt-12 flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.14em] text-muted md:mt-0">
-              <span className="grid h-8 w-8 place-items-center border border-line text-bhumi">
-                <ArrowDownRight size={15} />
-              </span>
-              <span>From concept to construction</span>
-            </div>
-          </div>
-          <div className="relative min-h-[390px] overflow-hidden md:min-h-0">
-            <MediaFrame
+      <section className="relative isolate min-h-[calc(100svh-76px)] overflow-hidden bg-ink text-white">
+        {site.heroImage && (
+          <>
+            <Image
               src={site.heroImage}
-              alt="BHUMI substation construction work"
-              className="absolute inset-0 h-full w-full"
+              alt="BHUMI project work"
+              fill
               priority
-              sizes="(max-width: 768px) 100vw, 52vw"
-              label="BHUMI project work"
+              sizes="100vw"
+              className="object-cover object-center"
             />
-            <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between bg-white/90 px-5 py-4 backdrop-blur-sm md:px-6">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-bhumi">
-                  BHUMI
-                </p>
-                <p className="mt-1 text-xs font-medium text-ink">
-                  {site.location || "Tulsipur, Dang, Nepal"}
-                </p>
-              </div>
-              <span className="hidden h-9 w-9 border border-line bg-white sm:block" />
+            <div
+              className="absolute inset-0 bg-[#101824]/60"
+              aria-hidden="true"
+            />
+          </>
+        )}
+        <div className="site-shell relative z-10 flex min-h-[calc(100svh-76px)] flex-col justify-center pb-24 pt-16 sm:py-28">
+          <div className="max-w-[960px] animate-soft-rise">
+            <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">
+              <span className="h-px w-7 bg-white/80" aria-hidden="true" />
+              Civil engineering + construction
+            </p>
+            <h1 className="mt-6 max-w-[940px] text-[clamp(2.75rem,5.5vw,5rem)] font-semibold leading-[1.02] tracking-[-0.055em] text-white sm:mt-7">
+              {site.heroTitle ||
+                "Built with engineering. Delivered with precision."}
+            </h1>
+            <p className="mt-6 max-w-xl text-sm leading-7 text-white/85 sm:mt-7 sm:text-base sm:leading-8 md:text-lg">
+              {site.heroDescription || site.description}
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
+              <ButtonLink
+                href="/projects"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
+                View projects <ArrowUpRight size={17} aria-hidden="true" />
+              </ButtonLink>
+              <ButtonLink
+                href="/contact"
+                size="lg"
+                variant="outline"
+                className="w-full border-white/75 text-white hover:border-white hover:bg-white hover:text-ink sm:w-auto"
+              >
+                Contact us
+              </ButtonLink>
             </div>
           </div>
+          <a
+            href="#home-highlights"
+            className="group absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75 transition-colors hover:text-white md:bottom-6"
+          >
+            <span>Scroll to explore</span>
+            <ArrowDown
+              size={15}
+              strokeWidth={1.7}
+              aria-hidden="true"
+              className="motion-safe:animate-scroll-cue"
+            />
+          </a>
         </div>
       </section>
 
-      <CompanyHighlights />
+      <div id="home-highlights" className="scroll-mt-[76px]">
+        <CompanyHighlights />
+      </div>
 
       <section className="bg-canvas py-16 md:py-24">
         <div className="site-shell">

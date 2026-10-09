@@ -17,12 +17,14 @@ export function ImageUploader({
   value = "",
   previewUrl = "",
   label = "Image",
+  clearLabel = "Clear field",
   hint = "Public media: JPEG, PNG, WebP, or AVIF up to 8 MB. The file is uploaded only when you save this form.",
 }: {
   name: string;
   value?: string;
   previewUrl?: string;
   label?: string;
+  clearLabel?: string;
   hint?: string;
 }) {
   const inputId = useId();
@@ -73,7 +75,7 @@ export function ImageUploader({
             className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 hover:text-red-800"
           >
             <Trash2 className="size-3.5" aria-hidden="true" />
-            Clear field
+            {clearLabel}
           </button>
         ) : null}
       </div>

@@ -40,7 +40,7 @@ values (
   '/brand/bhumi-wordmark.png',
   'Built with engineering. Delivered with precision.',
   'Civil engineering and construction solutions for residential and institutional infrastructure projects in Tulsipur, Dang, Nepal.',
-  '/images/portfolio/murkuti-crb-shuttering-site.png',
+  '/images/portfolio/hari-pariyar-side-view.jpg',
   '/images/portfolio/hari-pariyar-complete.jpg',
   '{}'::jsonb,
   'BHUMI Design & Construction | Civil Engineering & Construction Solutions',
