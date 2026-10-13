@@ -1,4 +1,8 @@
 import { defaultHeroImagePath } from "@/features/content/hero-image";
+import {
+  readPageIntros,
+  type PageIntros,
+} from "@/features/content/page-intros";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
@@ -151,6 +155,8 @@ export type AdminSettings = {
   aboutImagePath: string | null;
   aboutTitle: string | null;
   aboutContent: string | null;
+  pageIntrosAvailable: boolean;
+  pageIntros: PageIntros;
   socialLinks: Record<string, string>;
   defaultSeoTitle: string | null;
   defaultSeoDescription: string | null;
@@ -456,6 +462,8 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     aboutImagePath: source ? text(source.about_image_path) : null,
     aboutTitle: source ? text(source.about_title) : null,
     aboutContent: source ? text(source.about_content) : null,
+    pageIntrosAvailable: Boolean(source && "page_intros" in source),
+    pageIntros: readPageIntros(source?.page_intros),
     socialLinks,
     defaultSeoTitle: source ? text(source.default_seo_title) : null,
     defaultSeoDescription: source ? text(source.default_seo_description) : null,

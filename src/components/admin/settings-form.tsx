@@ -1,5 +1,9 @@
 import { updateSiteSettingsAction } from "@/app/actions/admin";
 import { resolveHeroImagePath } from "@/features/content/hero-image";
+import {
+  pageIntroDefaults,
+  pageIntroKeys,
+} from "@/features/content/page-intros";
 
 import type { AdminSettings } from "./admin-data";
 import {
@@ -19,7 +23,6 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
   return (
     <form
       action={updateSiteSettingsAction}
-      encType="multipart/form-data"
       className="mx-auto max-w-5xl space-y-5"
     >
       {settings.id ? (
@@ -116,20 +119,26 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           defaultValue={optional(settings.aboutContent)}
           rows={7}
         />
+        <ImageUploader
+          name="about_image_path"
+          value={optional(settings.aboutImagePath)}
+          previewUrl={publicMediaUrl(settings.aboutImagePath)}
+          label="About image"
+        />
       </FormSection>
 
       <FormSection
-        title="Page images"
-        description="Use real project imagery approved for the website."
+        title="Homepage hero"
+        description="Edit the homepage title and subtitle here. Clear either field and save to remove it. Use only approved project imagery for the photo."
       >
         <TextField
-          label="Hero heading"
+          label="Title"
           name="hero_title"
           className="md:col-span-2"
           defaultValue={optional(settings.heroTitle)}
         />
         <TextAreaField
-          label="Hero description"
+          label="Subtitle"
           name="hero_description"
           className="md:col-span-2"
           defaultValue={optional(settings.heroDescription)}
@@ -146,13 +155,36 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           clearLabel="Remove photo"
           hint="Use an approved wide project photo. Replace or remove it here, then save changes. Without a photo, the hero has a charcoal background."
         />
-        <ImageUploader
-          name="about_image_path"
-          value={optional(settings.aboutImagePath)}
-          previewUrl={publicMediaUrl(settings.aboutImagePath)}
-          label="About image"
-        />
       </FormSection>
+
+      {settings.pageIntrosAvailable && (
+        <FormSection
+          title="Page introductions"
+          description="Edit the title and subtitle above each page. Clear either field and save to remove it from the public page. Clear both to remove the entire introduction."
+        >
+          {pageIntroKeys.map((key) => (
+            <fieldset
+              key={key}
+              className="grid gap-5 border-t border-line pt-5 md:col-span-2 md:grid-cols-2"
+            >
+              <legend className="text-sm font-semibold text-ink">
+                {pageIntroDefaults[key].label}
+              </legend>
+              <TextField
+                label="Title"
+                name={`page_intro_${key}_title`}
+                defaultValue={optional(settings.pageIntros[key].title)}
+              />
+              <TextAreaField
+                label="Subtitle"
+                name={`page_intro_${key}_subtitle`}
+                defaultValue={optional(settings.pageIntros[key].subtitle)}
+                rows={2}
+              />
+            </fieldset>
+          ))}
+        </FormSection>
+      )}
 
       <FormSection
         title="Social links"

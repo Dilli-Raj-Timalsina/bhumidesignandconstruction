@@ -133,6 +133,7 @@ export type Database = {
           hero_description: string | null;
           hero_image_path: string | null;
           about_image_path: string | null;
+          page_intros: Json;
           social_links: Json;
           default_seo_title: string | null;
           default_seo_description: string | null;
@@ -157,6 +158,7 @@ export type Database = {
           hero_description?: string | null;
           hero_image_path?: string | null;
           about_image_path?: string | null;
+          page_intros?: Json;
           social_links?: Json;
           default_seo_title?: string | null;
           default_seo_description?: string | null;
@@ -181,6 +183,7 @@ export type Database = {
           hero_description?: string | null;
           hero_image_path?: string | null;
           about_image_path?: string | null;
+          page_intros?: Json;
           social_links?: Json;
           default_seo_title?: string | null;
           default_seo_description?: string | null;

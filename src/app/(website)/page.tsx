@@ -18,6 +18,7 @@ import {
   getFeaturedProject,
   getGalleryAlbums,
   getProjects,
+  getServices,
   getSiteContent,
 } from "@/features/content/queries";
 
@@ -25,15 +26,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export const revalidate = 300;
-
 export default async function HomePage() {
-  const [site, featuredProject, projects, albums] = await Promise.all([
-    getSiteContent(),
-    getFeaturedProject(),
-    getProjects(6),
-    getGalleryAlbums(4),
-  ]);
+  const [site, featuredProject, projects, albums, services] = await Promise.all(
+    [
+      getSiteContent(),
+      getFeaturedProject(),
+      getProjects(6),
+      getGalleryAlbums(4),
+      getServices(6),
+    ],
+  );
   const galleryImages = getAllGalleryImages(albums).slice(0, 8);
 
   return (
@@ -61,13 +63,18 @@ export default async function HomePage() {
               <span className="h-px w-7 bg-white/80" aria-hidden="true" />
               Civil engineering + construction
             </p>
-            <h1 className="mt-6 max-w-[940px] text-[clamp(2.75rem,5.5vw,5rem)] font-semibold leading-[1.02] tracking-[-0.055em] text-white sm:mt-7">
-              {site.heroTitle ||
-                "Built with engineering. Delivered with precision."}
-            </h1>
-            <p className="mt-6 max-w-xl text-sm leading-7 text-white/85 sm:mt-7 sm:text-base sm:leading-8 md:text-lg">
-              {site.heroDescription || site.description}
-            </p>
+            {site.heroTitle ? (
+              <h1 className="mt-6 max-w-[940px] text-[clamp(2.75rem,5.5vw,5rem)] font-semibold leading-[1.02] tracking-[-0.055em] text-white sm:mt-7">
+                {site.heroTitle}
+              </h1>
+            ) : (
+              <h1 className="sr-only">BHUMI Design & Construction</h1>
+            )}
+            {site.heroDescription && (
+              <p className="mt-6 max-w-xl text-sm leading-7 text-white/85 sm:mt-7 sm:text-base sm:leading-8 md:text-lg">
+                {site.heroDescription}
+              </p>
+            )}
             <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
               <ButtonLink
                 href="/projects"
@@ -110,10 +117,11 @@ export default async function HomePage() {
           <div className="grid gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-16">
             <p className="eyebrow self-start">Our practice</p>
             <div>
-              <p className="max-w-3xl text-[clamp(1.7rem,3vw,2.8rem)] font-semibold leading-[1.18] tracking-[-0.045em] text-ink">
-                A Tulsipur-based civil engineering and construction contractor
-                for turnkey residential and institutional infrastructure work.
-              </p>
+              {site.description && (
+                <p className="max-w-3xl text-[clamp(1.7rem,3vw,2.8rem)] font-semibold leading-[1.18] tracking-[-0.045em] text-ink">
+                  {site.description}
+                </p>
+              )}
               <div className="mt-10 grid border-t border-line sm:grid-cols-3">
                 {[
                   [
@@ -158,7 +166,7 @@ export default async function HomePage() {
           <div className="relative min-h-[380px] md:min-h-[530px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI completed structure work in Dang"
+              alt="BHUMI project work"
               className="absolute inset-0 h-full w-full"
               label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 45vw"
@@ -166,13 +174,14 @@ export default async function HomePage() {
           </div>
           <div className="flex flex-col justify-center py-2">
             <p className="eyebrow">About BHUMI</p>
-            <h2 className="section-title mt-5 max-w-xl">
-              Turnkey delivery, grounded in engineering.
-            </h2>
-            <p className="mt-6 max-w-xl text-base leading-8 text-muted">
-              {site.aboutContent ||
-                "BHUMI Design and Construction Pvt. Ltd. is a civil engineering and construction contracting company based in Tulsipur, Dang, Nepal, focused on turnkey and civil contracting work for private residential clients and institutional infrastructure projects."}
-            </p>
+            {site.aboutTitle && (
+              <h2 className="section-title mt-5 max-w-xl">{site.aboutTitle}</h2>
+            )}
+            {site.aboutContent && (
+              <p className="mt-6 max-w-xl whitespace-pre-line text-base leading-8 text-muted">
+                {site.aboutContent}
+              </p>
+            )}
             <ButtonLink href="/about" variant="text" className="mt-8 w-fit">
               About Bhumi <ArrowUpRight size={16} />
             </ButtonLink>
@@ -194,7 +203,14 @@ export default async function HomePage() {
             description="Practical support for every stage of your project — from early advice and design through construction, quality checks, and handover."
           />
           <div className="mt-10 md:mt-14">
-            <ServiceOfferings />
+            {services.length > 0 ? (
+              <ServiceOfferings services={services} />
+            ) : (
+              <ContentEmptyState
+                title="Services are being updated."
+                detail="Published services will appear here shortly."
+              />
+            )}
           </div>
           <ButtonLink href="/services" variant="text" className="mt-8">
             Explore services <ArrowUpRight size={16} />

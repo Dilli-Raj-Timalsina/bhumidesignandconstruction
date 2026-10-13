@@ -1,10 +1,12 @@
 "use server";
 
 import sanitizeHtml from "sanitize-html";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/components/admin/require-admin";
+import { publicContentTags } from "@/features/content/cache";
+import { pageIntroKeys } from "@/features/content/page-intros";
 import {
   getConfiguredAdminCredentials,
   hasAdminServerConfiguration,
@@ -145,7 +147,8 @@ function errorRedirect(path: string, message: string): never {
 }
 
 function successRedirect(path: string, message: string): never {
-  redirect(noticePath(path, "notice", message));
+  const notice = noticePath(path, "notice", message);
+  redirect(`${notice}&noticeId=${crypto.randomUUID()}`);
 }
 
 function formRecord(formData: FormData) {
@@ -166,10 +169,12 @@ function revalidateContent(
   kind: "projects" | "services" | "gallery" | "posts",
   slug?: string,
 ) {
+  updateTag(publicContentTags[kind]);
   revalidatePath("/");
   if (kind === "projects") {
     revalidatePath("/projects");
     revalidatePath("/projects/[slug]", "page");
+    revalidatePath("/sitemap.xml");
     if (slug) revalidatePath(`/projects/${slug}`);
   }
   if (kind === "services") revalidatePath("/services");
@@ -177,6 +182,7 @@ function revalidateContent(
   if (kind === "posts") {
     revalidatePath("/insights");
     revalidatePath("/insights/[slug]", "page");
+    revalidatePath("/sitemap.xml");
     if (slug) revalidatePath(`/insights/${slug}`);
   }
 }
@@ -233,6 +239,7 @@ function sanitizePostHtml(content: string | null): string | null {
 }
 
 function revalidateSettings() {
+  updateTag(publicContentTags.site);
   revalidatePath("/", "layout");
 }
 
@@ -622,14 +629,15 @@ export async function updateProjectAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.cover_image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("projects")
     .update({ ...updates, cover_image_path: nextPath })
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error)
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
     errorRedirect(
       fallbackPath,
       "The project could not be saved. Check that its slug is unique.",
@@ -724,15 +732,17 @@ export async function updateProjectImageAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("project_images")
     .update({ ...updates, image_path: nextPath })
     .eq("id", id)
     .eq("project_id", parsed.data.project_id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error) errorRedirect(fallbackPath, "The image could not be saved.");
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
+    errorRedirect(fallbackPath, "The image could not be saved.");
   await cleanupReplacedMedia(supabase, existing.image_path, nextPath);
   revalidateContent("projects");
   successRedirect(fallbackPath, "Project image saved.");
@@ -840,14 +850,15 @@ export async function updateServiceAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.cover_image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("services")
     .update({ ...updates, cover_image_path: nextPath })
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error)
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
     errorRedirect(
       fallbackPath,
       "The service could not be saved. Check that its slug is unique.",
@@ -944,14 +955,15 @@ export async function updateGalleryAlbumAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.cover_image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("gallery_albums")
     .update({ ...updates, cover_image_path: nextPath })
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error)
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
     errorRedirect(
       fallbackPath,
       "The album could not be saved. Check that its slug is unique.",
@@ -1045,15 +1057,17 @@ export async function updateGalleryImageAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("gallery_images")
     .update({ ...updates, image_path: nextPath })
     .eq("id", id)
     .eq("album_id", parsed.data.album_id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error) errorRedirect(fallbackPath, "The image could not be saved.");
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
+    errorRedirect(fallbackPath, "The image could not be saved.");
   await cleanupReplacedMedia(supabase, existing.image_path, nextPath);
   revalidateContent("gallery");
   successRedirect(fallbackPath, "Gallery image saved.");
@@ -1173,14 +1187,15 @@ export async function updatePostAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.cover_image_path;
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("posts")
     .update({ ...updates, content, cover_image_path: nextPath })
     .eq("id", id)
     .select("id")
     .maybeSingle();
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
-  if (error)
+  if (error || !data)
+    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error || !data)
     errorRedirect(
       fallbackPath,
       "The article could not be saved. Check that its slug is unique.",
@@ -1287,6 +1302,17 @@ function siteSettingsRecord(formData: FormData, includeId: boolean) {
     about_image_path: source.about_image_path,
     about_title: source.about_title,
     about_content: source.about_content,
+    page_intros: JSON.stringify(
+      Object.fromEntries(
+        pageIntroKeys.map((key) => [
+          key,
+          {
+            title: source[`page_intro_${key}_title`],
+            subtitle: source[`page_intro_${key}_subtitle`],
+          },
+        ]),
+      ),
+    ),
     social_links: JSON.stringify(socialLinks),
     default_seo_title: source.default_seo_title,
     default_seo_description: source.default_seo_description,
@@ -1314,7 +1340,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     const { id: settingId, ...updates } = parsed.data;
     const { data: existing, error: existingError } = await supabase
       .from("site_settings")
-      .select("logo_path, hero_image_path, about_image_path")
+      .select("*")
       .eq("id", settingId)
       .eq("settings_key", "default")
       .maybeSingle();
@@ -1328,20 +1354,24 @@ export async function updateSiteSettingsAction(formData: FormData) {
       errorRedirect("/admin/settings", uploadErrorMessage(error));
     }
     const nextSettings = { ...updates, ...uploads };
-    const { error } = await supabase
+    const { page_intros: _pageIntros, ...settingsWithoutIntros } = nextSettings;
+    const settingsToSave =
+      "page_intros" in existing ? nextSettings : settingsWithoutIntros;
+    const { data, error } = await supabase
       .from("site_settings")
-      .update(nextSettings)
+      .update(settingsToSave)
       .eq("id", settingId)
       .eq("settings_key", "default")
       .select("id")
       .maybeSingle();
-    if (error)
+    if (error || !data)
       await Promise.all(
         Object.values(uploads).map((path) =>
           removeNewUploadAfterFailedWrite(supabase, path),
         ),
       );
-    if (error) errorRedirect("/admin/settings", "Settings could not be saved.");
+    if (error || !data)
+      errorRedirect("/admin/settings", "Settings could not be saved.");
     await Promise.all(
       siteImageFields.map(({ field }) =>
         cleanupReplacedMedia(supabase, existing[field], nextSettings[field]),
@@ -1357,9 +1387,10 @@ export async function updateSiteSettingsAction(formData: FormData) {
     } catch (error) {
       errorRedirect("/admin/settings", uploadErrorMessage(error));
     }
+    const { page_intros: _pageIntros, ...settingsWithoutIntros } = parsed.data;
     const { error } = await supabase
       .from("site_settings")
-      .insert({ ...parsed.data, ...uploads });
+      .insert({ ...settingsWithoutIntros, ...uploads });
     if (error)
       await Promise.all(
         Object.values(uploads).map((path) =>

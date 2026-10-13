@@ -1,8 +1,10 @@
+import type { PageIntros } from "./page-intros";
+
 export type SiteContent = {
   companyName: string;
   shortName: string;
-  tagline: string;
-  description: string;
+  tagline: string | null;
+  description: string | null;
   location: string | null;
   address: string | null;
   email: string | null;
@@ -14,6 +16,7 @@ export type SiteContent = {
   heroDescription: string | null;
   heroImage: string | null;
   aboutImage: string | null;
+  pageIntros: PageIntros;
   socialLinks: Record<string, string>;
   defaultSeoTitle: string | null;
   defaultSeoDescription: string | null;

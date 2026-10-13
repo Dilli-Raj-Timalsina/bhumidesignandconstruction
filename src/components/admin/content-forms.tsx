@@ -46,7 +46,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
   const action = editing ? updateProjectAction : createProjectAction;
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {project ? <input type="hidden" name="id" value={project.id} /> : null}
       <FormLayout>
         <FormSection
@@ -218,7 +218,7 @@ export function ServiceForm({ service }: { service?: AdminService }) {
   const action = editing ? updateServiceAction : createServiceAction;
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {service ? <input type="hidden" name="id" value={service.id} /> : null}
       <FormLayout>
         <FormSection
@@ -334,7 +334,7 @@ export function GalleryAlbumForm({ album }: { album?: AdminAlbum }) {
   const action = editing ? updateGalleryAlbumAction : createGalleryAlbumAction;
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {album ? <input type="hidden" name="id" value={album.id} /> : null}
       <FormLayout>
         <FormSection
@@ -429,7 +429,7 @@ export function PostForm({ post }: { post?: AdminPost }) {
   const action = editing ? updatePostAction : createPostAction;
 
   return (
-    <form action={action} encType="multipart/form-data" className="space-y-5">
+    <form action={action} className="space-y-5">
       {post ? <input type="hidden" name="id" value={post.id} /> : null}
       <FormLayout>
         <FormSection

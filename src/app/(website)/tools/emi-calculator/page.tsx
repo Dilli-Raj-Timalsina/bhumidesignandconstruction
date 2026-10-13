@@ -1,23 +1,16 @@
-import type { Metadata } from "next";
-
 import { EmiCalculator } from "@/components/website/tools/emi-calculator";
-import { ToolHero } from "@/components/website/tools/tool-ui";
+import { PageIntro } from "@/components/website/page-intro";
+import { getPageIntroMetadata } from "@/features/content/metadata";
+import { getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "EMI calculator",
-  description:
-    "Estimate monthly loan instalments and repayment totals in Nepalese Rupees.",
-  alternates: { canonical: "/tools/emi-calculator" },
-};
+export const generateMetadata = () =>
+  getPageIntroMetadata("emiCalculator", "/tools/emi-calculator");
 
-export default function EmiCalculatorPage() {
+export default async function EmiCalculatorPage() {
+  const site = await getSiteContent();
   return (
     <>
-      <ToolHero
-        eyebrow="BHUMI tools"
-        title="EMI calculator"
-        description="Plan an estimated monthly instalment, total interest, and total loan repayment in NPR."
-      />
+      <PageIntro page="emiCalculator" intro={site.pageIntros.emiCalculator} />
       <section className="py-12 md:py-20">
         <div className="site-shell">
           <EmiCalculator />

@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -8,14 +7,11 @@ import {
   Ruler,
 } from "lucide-react";
 
-import { ToolHero } from "@/components/website/tools/tool-ui";
+import { PageIntro } from "@/components/website/page-intro";
+import { getPageIntroMetadata } from "@/features/content/metadata";
+import { getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "Construction tools",
-  description:
-    "Brick, concrete, area conversion, and EMI planning tools from BHUMI Design & Construction.",
-  alternates: { canonical: "/tools" },
-};
+export const generateMetadata = () => getPageIntroMetadata("tools", "/tools");
 
 const tools = [
   {
@@ -44,14 +40,11 @@ const tools = [
   },
 ];
 
-export default function ToolsPage() {
+export default async function ToolsPage() {
+  const site = await getSiteContent();
   return (
     <>
-      <ToolHero
-        eyebrow="BHUMI tools"
-        title="Practical calculators for your project."
-        description="Use these early-stage estimates to plan a project, understand local land units, and prepare for a more detailed discussion with the BHUMI team."
-      />
+      <PageIntro page="tools" intro={site.pageIntros.tools} />
       <section className="py-16 md:py-24">
         <div className="site-shell grid gap-px border border-line bg-line md:grid-cols-2">
           {tools.map((tool) => {

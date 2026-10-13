@@ -1,46 +1,28 @@
-import type { Metadata } from "next";
 import { ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { CtaSection } from "@/components/website/cta-section";
 import { ProcessTimeline } from "@/components/website/marketing-sections";
 import { MediaFrame } from "@/components/website/media-frame";
+import { PageIntro } from "@/components/website/page-intro";
 import { SectionHeading } from "@/components/website/section-heading";
+import { getPageIntroMetadata } from "@/features/content/metadata";
 import { getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "About",
-  description:
-    "BHUMI Design & Construction is a Tulsipur-based civil engineering and construction contracting company.",
-  alternates: { canonical: "/about" },
-};
+export const generateMetadata = () => getPageIntroMetadata("about", "/about");
 
 export default async function AboutPage() {
   const site = await getSiteContent();
-  const narrative =
-    site.aboutContent ||
-    "BHUMI Design and Construction Pvt. Ltd. is a civil engineering and construction contracting company based in Tulsipur, Dang, Nepal, founded and led by Er. Shashiram Nakal. The company focuses on turnkey and civil contracting work for private residential clients and institutional infrastructure projects.";
   return (
     <>
-      <section className="border-b border-line bg-canvas py-16 md:py-24">
-        <div className="site-shell">
-          <p className="eyebrow">About BHUMI</p>
-          <h1 className="display-title mt-6 max-w-5xl">
-            Engineering-led construction, from foundation to finish.
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            A Tulsipur-based contractor for turnkey residential work and
-            institutional civil infrastructure.
-          </p>
-        </div>
-      </section>
+      <PageIntro page="about" intro={site.pageIntros.about} />
 
       <section className="py-16 md:py-28">
         <div className="site-shell grid gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-20">
           <div className="relative min-h-[430px] lg:min-h-[620px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI completed structure work in Dang"
+              alt="BHUMI project work"
               className="absolute inset-0 h-full w-full"
               label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 55vw"
@@ -48,12 +30,14 @@ export default async function AboutPage() {
           </div>
           <div className="flex flex-col justify-center">
             <p className="eyebrow">The practice</p>
-            <h2 className="section-title mt-5">
-              {site.aboutTitle || "Turnkey delivery, grounded in engineering."}
-            </h2>
-            <div className="mt-7 max-w-xl whitespace-pre-line text-base leading-8 text-muted">
-              {narrative}
-            </div>
+            {site.aboutTitle && (
+              <h2 className="section-title mt-5">{site.aboutTitle}</h2>
+            )}
+            {site.aboutContent && (
+              <div className="mt-7 max-w-xl whitespace-pre-line text-base leading-8 text-muted">
+                {site.aboutContent}
+              </div>
+            )}
             <ButtonLink href="/contact" variant="text" className="mt-9 w-fit">
               Talk about your project <ArrowUpRight size={16} />
             </ButtonLink>

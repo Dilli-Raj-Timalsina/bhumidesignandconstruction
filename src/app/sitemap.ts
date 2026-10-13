@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 
-import { getProjects } from "@/features/content/queries";
+import { getPosts, getProjects } from "@/features/content/queries";
+
+export const revalidate = 0;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const projects = await getProjects();
+  const [projects, posts] = await Promise.all([getProjects(), getPosts()]);
   const staticRoutes = [
     "",
     "/about",
@@ -25,6 +27,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
       priority: 0.8,
+    })),
+    ...posts.map((post) => ({
+      url: `${baseUrl}/insights/${post.slug}`,
+      lastModified: post.publishedAt ? new Date(post.publishedAt) : new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
     })),
   ];
 }

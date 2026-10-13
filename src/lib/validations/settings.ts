@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  pageIntroKeys,
+  type PageIntroKey,
+} from "@/features/content/page-intros";
 
 import {
   idSchema,
@@ -16,6 +20,23 @@ const socialLinkNameSchema = z.enum([
   "tiktok",
   "x",
 ]);
+
+const pageIntrosSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string") return value;
+    try {
+      return JSON.parse(value) as unknown;
+    } catch {
+      return value;
+    }
+  },
+  z.record(
+    z.enum(pageIntroKeys as [PageIntroKey, ...PageIntroKey[]]),
+    z
+      .object({ title: nullableText(240), subtitle: nullableText(2_000) })
+      .strict(),
+  ),
+);
 
 const nullableEmailSchema = z
   .union([
@@ -69,6 +90,7 @@ export const siteSettingsSchema = z
     about_image_path: nullableStoragePathSchema,
     about_title: nullableText(240),
     about_content: nullableText(20_000),
+    page_intros: pageIntrosSchema,
     social_links: socialLinksSchema,
     default_seo_title: nullableText(180),
     default_seo_description: nullableText(320),

@@ -1,34 +1,20 @@
-import type { Metadata } from "next";
 import { ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
 import { ContentEmptyState } from "@/components/website/empty-content";
 import { ProjectCard } from "@/components/website/project-card";
-import { getProjects } from "@/features/content/queries";
+import { PageIntro } from "@/components/website/page-intro";
+import { getPageIntroMetadata } from "@/features/content/metadata";
+import { getProjects, getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "Projects",
-  description:
-    "Current and completed civil engineering and construction projects by BHUMI Design & Construction.",
-  alternates: { canonical: "/projects" },
-};
+export const generateMetadata = () =>
+  getPageIntroMetadata("projects", "/projects");
 
 export default async function ProjectsPage() {
-  const projects = await getProjects();
+  const [projects, site] = await Promise.all([getProjects(), getSiteContent()]);
   return (
     <>
-      <section className="border-b border-line bg-canvas py-16 md:py-24">
-        <div className="site-shell">
-          <p className="eyebrow">Projects</p>
-          <h1 className="display-title mt-6 max-w-5xl">
-            Current work. Completed work. Built with care.
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            A documented portfolio of substation, residential, and structural
-            construction work across Dang.
-          </p>
-        </div>
-      </section>
+      <PageIntro page="projects" intro={site.pageIntros.projects} />
       <section className="py-16 md:py-28">
         <div className="site-shell">
           {projects.length > 0 ? (

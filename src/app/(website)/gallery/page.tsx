@@ -1,32 +1,20 @@
-import type { Metadata } from "next";
-
 import { ContentEmptyState } from "@/components/website/empty-content";
 import { GalleryBrowser } from "@/components/website/gallery-browser";
-import { getGalleryAlbums } from "@/features/content/queries";
+import { PageIntro } from "@/components/website/page-intro";
+import { getPageIntroMetadata } from "@/features/content/metadata";
+import { getGalleryAlbums, getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "Gallery",
-  description:
-    "Portfolio photography and proposal imagery from BHUMI Design & Construction projects in Dang.",
-  alternates: { canonical: "/gallery" },
-};
+export const generateMetadata = () =>
+  getPageIntroMetadata("gallery", "/gallery");
 
 export default async function GalleryPage() {
-  const albums = await getGalleryAlbums();
+  const [albums, site] = await Promise.all([
+    getGalleryAlbums(),
+    getSiteContent(),
+  ]);
   return (
     <>
-      <section className="border-b border-line bg-canvas py-16 md:py-24">
-        <div className="site-shell">
-          <p className="eyebrow">Gallery</p>
-          <h1 className="display-title mt-6 max-w-5xl">
-            The detail is in the work.
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-muted">
-            Project photography and proposal imagery, organized by the work
-            documented in BHUMI&apos;s portfolio.
-          </p>
-        </div>
-      </section>
+      <PageIntro page="gallery" intro={site.pageIntros.gallery} />
       <section className="py-16 md:py-28">
         <div className="site-shell">
           {albums.length > 0 ? (

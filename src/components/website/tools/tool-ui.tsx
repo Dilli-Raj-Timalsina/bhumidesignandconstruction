@@ -2,28 +2,6 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-export function ToolHero({
-  eyebrow,
-  title,
-  description,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <section className="border-b border-line bg-canvas py-14 md:py-20">
-      <div className="site-shell">
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className="display-title mt-5 max-w-4xl">{title}</h1>
-        <p className="mt-5 max-w-2xl text-base leading-8 text-muted md:text-lg">
-          {description}
-        </p>
-      </div>
-    </section>
-  );
-}
-
 export function ToolPanel({
   eyebrow,
   title,

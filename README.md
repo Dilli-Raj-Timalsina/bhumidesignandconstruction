@@ -68,7 +68,8 @@ For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-
    [`20260927000000_initial_schema.sql`](supabase/migrations/20260927000000_initial_schema.sql), then
    [`20260927120000_admin_security_hardening.sql`](supabase/migrations/20260927120000_admin_security_hardening.sql), then
    [`20260927130000_configured_admin_and_login_rate_limit.sql`](supabase/migrations/20260927130000_configured_admin_and_login_rate_limit.sql), then
-   [`20260928000000_media_lifecycle.sql`](supabase/migrations/20260928000000_media_lifecycle.sql).
+   [`20260928000000_media_lifecycle.sql`](supabase/migrations/20260928000000_media_lifecycle.sql), then
+   [`20261013000000_page_intros.sql`](supabase/migrations/20261013000000_page_intros.sql).
 3. Run [`supabase/seed.sql`](supabase/seed.sql). It seeds the verified company profile, services, five documented projects, albums and captions from the supplied portfolio. Approved portfolio assets are bundled under `public/` for the initial site and can later be replaced through the admin workspace.
 4. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env.local`, then run:
 
@@ -133,7 +134,7 @@ src/lib/validations   Zod mutation schemas
 supabase/migrations   Schema, RLS and Storage policies
 ```
 
-Public pages use server-side Supabase reads and graceful empty states during first-time setup. Admin mutations revalidate the affected public routes. Dynamic SEO lives in route metadata, `sitemap.ts` and `robots.ts`.
+Public pages render on the server for SEO. Public Supabase reads use the anon key and RLS, with a one-minute tagged data cache. Admin saves expire the affected tag and revalidate the relevant pages immediately; an open public tab in the same browser refreshes after a successful admin save. A successful query with no published records shows an empty state. The bundled portfolio is used only when Supabase is not configured. `sitemap.ts` and route metadata reflect published content. No cron job is needed for admin edits; changes made directly in Supabase are picked up by the cache TTL unless they also trigger a revalidation webhook.
 
 ## Deployment
 

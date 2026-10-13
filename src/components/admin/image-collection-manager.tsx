@@ -48,11 +48,7 @@ export function ImageCollectionManager({
         title="Add image"
         description="Images are stored in the media library. Use the display order to control the public sequence."
       >
-        <form
-          action={config.addAction as FormAction}
-          encType="multipart/form-data"
-          className="contents"
-        >
+        <form action={config.addAction as FormAction} className="contents">
           <input type="hidden" name={config.idField} value={parentId} />
           <div className="md:col-span-2">
             <ImageUploader name="image_path" label="Image file" />

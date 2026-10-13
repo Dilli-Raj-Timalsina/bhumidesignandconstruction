@@ -9,6 +9,9 @@ type FooterProps = {
   email?: string | null;
   phone?: string | null;
   logoSrc?: string | null;
+  description?: string | null;
+  tagline?: string | null;
+  socialLinks?: Record<string, string>;
 };
 
 const navigation = [
@@ -19,12 +22,24 @@ const navigation = [
   { href: "/contact", label: "Contact" },
 ];
 
+const socialPlatforms = [
+  ["facebook", "Facebook"],
+  ["instagram", "Instagram"],
+  ["linkedin", "LinkedIn"],
+  ["youtube", "YouTube"],
+  ["tiktok", "TikTok"],
+  ["x", "X"],
+] as const;
+
 export function Footer({
   companyName = "BHUMI DESIGN & CONSTRUCTION PVT. LTD.",
   location,
   email,
   phone,
   logoSrc,
+  description,
+  tagline,
+  socialLinks = {},
 }: FooterProps) {
   const year = new Date().getFullYear();
   return (
@@ -32,10 +47,28 @@ export function Footer({
       <div className="site-shell grid gap-12 py-14 lg:grid-cols-[1.45fr_0.7fr_0.9fr] lg:gap-20 lg:py-20">
         <div>
           <BrandMark logoSrc={logoSrc} />
-          <p className="mt-7 max-w-sm text-sm leading-7 text-muted">
-            Civil engineering and construction solutions for turnkey residential
-            and institutional infrastructure work.
-          </p>
+          {description && (
+            <p className="mt-7 max-w-sm text-sm leading-7 text-muted">
+              {description}
+            </p>
+          )}
+          {socialPlatforms.some(([key]) => socialLinks[key]) && (
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2">
+              {socialPlatforms.map(([key, label]) =>
+                socialLinks[key] ? (
+                  <a
+                    key={key}
+                    href={socialLinks[key]}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-ink hover:text-bhumi"
+                  >
+                    {label}
+                  </a>
+                ) : null,
+              )}
+            </div>
+          )}
         </div>
 
         <div>
@@ -96,7 +129,7 @@ export function Footer({
           <p>
             © {year} {companyName}
           </p>
-          <p>Built with engineering. Delivered with precision.</p>
+          {tagline && <p>{tagline}</p>}
         </div>
       </div>
     </footer>

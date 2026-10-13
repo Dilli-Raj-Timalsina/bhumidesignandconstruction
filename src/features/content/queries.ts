@@ -1,6 +1,8 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
-import { createClient, hasSupabaseEnv } from "@/lib/supabase/server";
+import { hasSupabaseEnv } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { getPublicStorageUrl } from "@/lib/utils";
 
 import {
@@ -12,6 +14,8 @@ import {
   portfolioFallbackSite,
 } from "./portfolio";
 import { resolveHeroImagePath } from "./hero-image";
+import { readPageIntros } from "./page-intros";
+import { publicContentRevalidateSeconds, publicContentTags } from "./cache";
 import type {
   PublicAlbumImage,
   PublicGalleryAlbum,
@@ -174,30 +178,28 @@ function mapPost(row: Row): PublicPost | null {
   };
 }
 
-function mapSite(row: Row | null): SiteContent {
-  if (!row) return fallbackSite;
+function mapSite(input: Row | null): SiteContent {
+  const row = input ?? {};
   const social = row.social_links;
   return {
     companyName: text(row.company_name) ?? fallbackSite.companyName,
     shortName: text(row.short_name) ?? fallbackSite.shortName,
-    tagline: text(row.tagline) ?? fallbackSite.tagline,
-    description: text(row.description) ?? fallbackSite.description,
-    location: text(row.location) ?? fallbackSite.location,
-    address: text(row.address) ?? fallbackSite.address,
-    email: text(row.email) ?? fallbackSite.email,
-    phone: text(row.phone) ?? fallbackSite.phone,
-    aboutTitle: text(row.about_title) ?? fallbackSite.aboutTitle,
-    aboutContent: text(row.about_content) ?? fallbackSite.aboutContent,
-    logoImage:
-      getPublicStorageUrl(text(row.logo_path)) ?? fallbackSite.logoImage,
-    heroTitle: text(row.hero_title) ?? fallbackSite.heroTitle,
-    heroDescription: text(row.hero_description) ?? fallbackSite.heroDescription,
+    tagline: text(row.tagline),
+    description: text(row.description),
+    location: text(row.location),
+    address: text(row.address),
+    email: text(row.email),
+    phone: text(row.phone),
+    aboutTitle: text(row.about_title),
+    aboutContent: text(row.about_content),
+    logoImage: getPublicStorageUrl(text(row.logo_path)),
+    heroTitle: text(row.hero_title),
+    heroDescription: text(row.hero_description),
     heroImage: getPublicStorageUrl(
       resolveHeroImagePath(text(row.hero_image_path)),
     ),
-    aboutImage:
-      getPublicStorageUrl(text(row.about_image_path)) ??
-      fallbackSite.aboutImage,
+    aboutImage: getPublicStorageUrl(text(row.about_image_path)),
+    pageIntros: readPageIntros(row.page_intros),
     socialLinks:
       typeof social === "object" && social !== null && !Array.isArray(social)
         ? Object.fromEntries(
@@ -206,54 +208,59 @@ function mapSite(row: Row | null): SiteContent {
                 typeof entry[1] === "string",
             ),
           )
-        : fallbackSite.socialLinks,
-    defaultSeoTitle:
-      text(row.default_seo_title) ?? fallbackSite.defaultSeoTitle,
-    defaultSeoDescription:
-      text(row.default_seo_description) ?? fallbackSite.defaultSeoDescription,
+        : {},
+    defaultSeoTitle: text(row.default_seo_title),
+    defaultSeoDescription: text(row.default_seo_description),
   };
 }
 
-async function attempt<T>(work: () => Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await work();
-  } catch {
-    return fallback;
-  }
-}
-
-export const getSiteContent = cache(async (): Promise<SiteContent> => {
-  if (!hasSupabaseEnv()) return fallbackSite;
-  return attempt(async () => {
-    const supabase = await createClient();
+const readSiteContent = unstable_cache(
+  async (): Promise<SiteContent> => {
+    const supabase = createPublicClient();
     const { data, error } = await supabase
       .from("site_settings")
       .select("*")
-      .limit(1)
+      .eq("settings_key", "default")
       .maybeSingle();
-    if (error) return fallbackSite;
+    if (error) throw new Error("Unable to load public site settings.");
     return mapSite(data as unknown as Row | null);
-  }, fallbackSite);
+  },
+  ["public-site-content"],
+  {
+    tags: [publicContentTags.site],
+    revalidate: publicContentRevalidateSeconds,
+  },
+);
+
+export const getSiteContent = cache(async (): Promise<SiteContent> => {
+  return hasSupabaseEnv() ? readSiteContent() : fallbackSite;
 });
 
-export async function getProjects(limit?: number): Promise<PublicProject[]> {
-  const fallback = fallbackItems(portfolioFallbackProjects, limit);
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    let query = supabase
+const readProjects = unstable_cache(
+  async (): Promise<PublicProject[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
       .from("projects")
       .select("*, project_images(*)")
       .eq("status", "published")
       .order("sort_order", { ascending: true });
-    if (limit) query = query.limit(limit);
-    const { data, error } = await query;
-    if (error) return fallback;
-    const projects = (data ?? [])
+    if (error) throw new Error("Unable to load public projects.");
+    return (data ?? [])
       .map((row) => mapProject(row as unknown as Row))
       .filter((project): project is PublicProject => project !== null);
-    return projects.length > 0 ? projects : fallback;
-  }, fallback);
+  },
+  ["public-projects"],
+  {
+    tags: [publicContentTags.projects],
+    revalidate: publicContentRevalidateSeconds,
+  },
+);
+
+export async function getProjects(limit?: number): Promise<PublicProject[]> {
+  const projects = hasSupabaseEnv()
+    ? await readProjects()
+    : portfolioFallbackProjects;
+  return fallbackItems(projects, limit);
 }
 
 export async function getFeaturedProject(): Promise<PublicProject | null> {
@@ -264,99 +271,94 @@ export async function getFeaturedProject(): Promise<PublicProject | null> {
 export async function getProjectBySlug(
   slug: string,
 ): Promise<PublicProject | null> {
-  const fallback =
-    portfolioFallbackProjects.find((project) => project.slug === slug) ?? null;
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("projects")
-      .select("*, project_images(*)")
-      .eq("slug", slug)
-      .eq("status", "published")
-      .maybeSingle();
-    if (error || !data) return fallback;
-    return mapProject(data as unknown as Row) ?? fallback;
-  }, fallback);
+  const projects = await getProjects();
+  return projects.find((project) => project.slug === slug) ?? null;
 }
 
-export async function getServices(limit?: number): Promise<PublicService[]> {
-  const fallback = fallbackItems(portfolioFallbackServices, limit);
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    let query = supabase
+const readServices = unstable_cache(
+  async (): Promise<PublicService[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
       .from("services")
       .select("*")
       .eq("status", "published")
       .order("sort_order", { ascending: true });
-    if (limit) query = query.limit(limit);
-    const { data, error } = await query;
-    if (error) return fallback;
-    const services = (data ?? [])
+    if (error) throw new Error("Unable to load public services.");
+    return (data ?? [])
       .map((row) => mapService(row as unknown as Row))
       .filter((service): service is PublicService => service !== null);
-    return services.length > 0 ? services : fallback;
-  }, fallback);
+  },
+  ["public-services"],
+  {
+    tags: [publicContentTags.services],
+    revalidate: publicContentRevalidateSeconds,
+  },
+);
+
+export async function getServices(limit?: number): Promise<PublicService[]> {
+  const services = hasSupabaseEnv()
+    ? await readServices()
+    : portfolioFallbackServices;
+  return fallbackItems(services, limit);
 }
 
-export async function getGalleryAlbums(
-  limit?: number,
-): Promise<PublicGalleryAlbum[]> {
-  const fallback = fallbackItems(portfolioFallbackGalleryAlbums, limit);
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    let query = supabase
+const readGalleryAlbums = unstable_cache(
+  async (): Promise<PublicGalleryAlbum[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
       .from("gallery_albums")
       .select("*, gallery_images(*)")
       .eq("status", "published")
       .order("sort_order", { ascending: true });
-    if (limit) query = query.limit(limit);
-    const { data, error } = await query;
-    if (error) return fallback;
-    const albums = (data ?? [])
+    if (error) throw new Error("Unable to load public gallery albums.");
+    return (data ?? [])
       .map((row) => mapAlbum(row as unknown as Row))
       .filter((album): album is PublicGalleryAlbum => album !== null);
-    return albums.length > 0 ? albums : fallback;
-  }, fallback);
+  },
+  ["public-gallery"],
+  {
+    tags: [publicContentTags.gallery],
+    revalidate: publicContentRevalidateSeconds,
+  },
+);
+
+export async function getGalleryAlbums(
+  limit?: number,
+): Promise<PublicGalleryAlbum[]> {
+  const albums = hasSupabaseEnv()
+    ? await readGalleryAlbums()
+    : portfolioFallbackGalleryAlbums;
+  return fallbackItems(albums, limit);
 }
 
-export async function getPosts(limit?: number): Promise<PublicPost[]> {
-  const fallback = fallbackItems(portfolioFallbackPosts, limit);
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    let query = supabase
+const readPosts = unstable_cache(
+  async (): Promise<PublicPost[]> => {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
       .from("posts")
       .select("*")
       .eq("status", "published")
       .order("published_at", { ascending: false });
-    if (limit) query = query.limit(limit);
-    const { data, error } = await query;
-    if (error) return fallback;
-    const posts = (data ?? [])
+    if (error) throw new Error("Unable to load public insights.");
+    return (data ?? [])
       .map((row) => mapPost(row as unknown as Row))
       .filter((post): post is PublicPost => post !== null);
-    return posts.length > 0 ? posts : fallback;
-  }, fallback);
+  },
+  ["public-posts"],
+  {
+    tags: [publicContentTags.posts],
+    revalidate: publicContentRevalidateSeconds,
+  },
+);
+
+export async function getPosts(limit?: number): Promise<PublicPost[]> {
+  const posts = hasSupabaseEnv() ? await readPosts() : portfolioFallbackPosts;
+  return fallbackItems(posts, limit);
 }
 
 export async function getPostBySlug(slug: string): Promise<PublicPost | null> {
-  const fallback =
-    portfolioFallbackPosts.find((post) => post.slug === slug) ?? null;
-  if (!hasSupabaseEnv()) return fallback;
-  return attempt(async () => {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("posts")
-      .select("*")
-      .eq("slug", slug)
-      .eq("status", "published")
-      .maybeSingle();
-    if (error || !data) return fallback;
-    return mapPost(data as unknown as Row) ?? fallback;
-  }, fallback);
+  const posts = await getPosts();
+  return posts.find((post) => post.slug === slug) ?? null;
 }
 
 export function getAllGalleryImages(albums: PublicGalleryAlbum[]) {

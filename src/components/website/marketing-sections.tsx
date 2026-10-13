@@ -13,11 +13,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-import {
-  companyHighlights,
-  processSteps,
-  serviceOfferings,
-} from "@/features/content/marketing";
+import { companyHighlights, processSteps } from "@/features/content/marketing";
+import type { PublicService } from "@/features/content/types";
 
 const serviceIcons = {
   design: PenTool,
@@ -73,31 +70,43 @@ export function CompanyHighlights() {
   );
 }
 
-export function ServiceOfferings() {
+export function ServiceOfferings({ services }: { services: PublicService[] }) {
   return (
     <div className="border-t border-line">
-      {serviceOfferings.map((service) => {
-        const Icon = serviceIcons[service.icon];
+      {services.map((service, index) => {
+        const Icon =
+          serviceIcons[service.icon as keyof typeof serviceIcons] ?? HardHat;
         return (
           <a
-            key={service.number}
+            key={service.id}
+            id={service.slug}
             href="/contact"
             className="group grid gap-5 border-b border-line py-8 transition-colors hover:bg-bhumi-light/35 md:grid-cols-[72px_minmax(0,1fr)_auto] md:items-start md:gap-10 md:py-10"
           >
             <p className="text-3xl font-semibold tracking-[-0.06em] text-bhumi/40 md:text-4xl">
-              {service.number}
+              {String(index + 1).padStart(2, "0")}
             </p>
             <div>
               <div className="flex items-center gap-4">
                 <span className="grid h-11 w-11 shrink-0 place-items-center border border-bhumi/15 bg-bhumi-light text-bhumi">
-                  <Icon size={19} aria-hidden="true" />
+                  {service.coverImage ? (
+                    <Image
+                      src={service.coverImage}
+                      alt=""
+                      width={44}
+                      height={44}
+                      className="h-11 w-11 object-cover"
+                    />
+                  ) : (
+                    <Icon size={19} aria-hidden="true" />
+                  )}
                 </span>
                 <h3 className="text-2xl font-semibold tracking-[-0.045em] text-ink md:text-3xl">
                   {service.title}
                 </h3>
               </div>
               <p className="mt-4 max-w-2xl text-base leading-7 text-muted md:pl-[3.75rem]">
-                {service.description}
+                {service.description || service.shortDescription}
               </p>
             </div>
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink transition-colors group-hover:text-bhumi md:mt-2">

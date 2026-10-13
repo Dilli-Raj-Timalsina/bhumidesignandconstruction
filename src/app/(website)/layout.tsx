@@ -1,7 +1,28 @@
+import type { Metadata } from "next";
+
+import { ContentRefresh } from "@/components/website/content-refresh";
 import { Footer } from "@/components/website/footer";
 import { Header } from "@/components/website/header";
 import { WhatsAppButton } from "@/components/website/whatsapp-button";
 import { getSiteContent } from "@/features/content/queries";
+
+// Render HTML and metadata per request; public Supabase reads remain cached.
+export const revalidate = 0;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteContent();
+  const title = site.defaultSeoTitle || "BHUMI — Design & Construction";
+  const description =
+    site.defaultSeoDescription ||
+    site.description ||
+    "Civil engineering and construction solutions for residential and institutional projects.";
+  return {
+    title: { default: title, template: `%s | ${site.shortName}` },
+    description,
+    openGraph: { title, description, siteName: site.shortName },
+    twitter: { title, description },
+  };
+}
 
 export default async function WebsiteLayout({
   children,
@@ -9,6 +30,7 @@ export default async function WebsiteLayout({
   const site = await getSiteContent();
   return (
     <div className="min-h-screen bg-white">
+      <ContentRefresh />
       <Header logoSrc={site.logoImage} />
       <main>{children}</main>
       <Footer
@@ -17,6 +39,9 @@ export default async function WebsiteLayout({
         email={site.email}
         phone={site.phone}
         logoSrc={site.logoImage}
+        description={site.description}
+        tagline={site.tagline}
+        socialLinks={site.socialLinks}
       />
       <WhatsAppButton phone={site.phone} />
     </div>

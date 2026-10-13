@@ -1,22 +1,16 @@
-import type { Metadata } from "next";
-
 import { AreaConverter } from "@/components/website/tools/area-converter";
-import { ToolHero } from "@/components/website/tools/tool-ui";
+import { PageIntro } from "@/components/website/page-intro";
+import { getPageIntroMetadata } from "@/features/content/metadata";
+import { getSiteContent } from "@/features/content/queries";
 
-export const metadata: Metadata = {
-  title: "Area converter",
-  description: "Convert standard, hill-region, and Terai land-area units.",
-  alternates: { canonical: "/tools/area-converter" },
-};
+export const generateMetadata = () =>
+  getPageIntroMetadata("areaConverter", "/tools/area-converter");
 
-export default function AreaConverterPage() {
+export default async function AreaConverterPage() {
+  const site = await getSiteContent();
   return (
     <>
-      <ToolHero
-        eyebrow="BHUMI tools"
-        title="Area converter"
-        description="Instantly convert square feet, square metres, Ropani, Aana, Bigha, Kattha, Dhur, and more."
-      />
+      <PageIntro page="areaConverter" intro={site.pageIntros.areaConverter} />
       <section className="py-12 md:py-20">
         <div className="site-shell">
           <AreaConverter />

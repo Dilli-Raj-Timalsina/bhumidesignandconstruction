@@ -1,13 +1,15 @@
 import { MessageCircle, Phone } from "lucide-react";
 
-function toWhatsAppNumber(phone: string | null | undefined): string {
-  const digits = (phone || "9763412459").replace(/\D/g, "");
+function toWhatsAppNumber(phone: string | null | undefined): string | null {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  if (!digits) return null;
   if (digits.startsWith("977")) return digits;
   return `977${digits.replace(/^0/, "")}`;
 }
 
 export function WhatsAppButton({ phone }: { phone?: string | null }) {
   const number = toWhatsAppNumber(phone);
+  if (!number) return null;
   const message = encodeURIComponent(
     "Hello BHUMI Design & Construction, I would like to discuss a project.",
   );
