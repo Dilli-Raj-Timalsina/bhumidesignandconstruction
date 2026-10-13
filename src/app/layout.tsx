@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Toaster } from "sonner";
+import { siteUrl } from "@/lib/site-url";
 
 import "@fontsource/manrope/400.css";
 import "@fontsource/manrope/500.css";
@@ -14,9 +15,7 @@ export const metadata: Metadata = {
   },
   description:
     "Civil engineering and construction solutions in Tulsipur, Dang, Nepal.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  ),
+  metadataBase: new URL(siteUrl),
   icons: {
     icon: "/brand/bhumi-icon.png",
     shortcut: "/brand/bhumi-icon.png",

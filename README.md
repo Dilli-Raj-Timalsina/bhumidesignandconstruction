@@ -59,7 +59,7 @@ The project does not require the database password, JWKS URL, or duplicate `SUPA
 
 Keep both `ADMIN_*` values server-only—never use a `NEXT_PUBLIC_` prefix.
 
-For a deployed canonical URL, optionally set `NEXT_PUBLIC_SITE_URL=https://your-domain.example` in Vercel. It is used for metadata, sitemap and robots output.
+The deployed canonical URL defaults to `https://bhumidesignandconstruction.vercel.app`. Set `NEXT_PUBLIC_SITE_URL=https://your-domain.example` in Vercel when using a custom domain. It is used for metadata, sitemap and robots output.
 
 ## Supabase setup
 
