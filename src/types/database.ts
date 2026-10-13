@@ -206,6 +206,7 @@ export type Database = {
           scope_of_work: string | null;
           execution_details: string | null;
           project_status: string | null;
+          stage: Database["public"]["Enums"]["project_stage"];
           status: Database["public"]["Enums"]["content_status"];
           published_at: string | null;
           start_date: string | null;
@@ -232,6 +233,7 @@ export type Database = {
           scope_of_work?: string | null;
           execution_details?: string | null;
           project_status?: string | null;
+          stage: Database["public"]["Enums"]["project_stage"];
           status?: Database["public"]["Enums"]["content_status"];
           published_at?: string | null;
           start_date?: string | null;
@@ -258,6 +260,7 @@ export type Database = {
           scope_of_work?: string | null;
           execution_details?: string | null;
           project_status?: string | null;
+          stage?: Database["public"]["Enums"]["project_stage"];
           status?: Database["public"]["Enums"]["content_status"];
           published_at?: string | null;
           start_date?: string | null;
@@ -632,6 +635,7 @@ export type Database = {
     Enums: {
       content_status: "draft" | "published";
       contact_message_status: "new" | "read" | "archived";
+      project_stage: "completed" | "ongoing" | "upcoming";
     };
     CompositeTypes: Record<string, never>;
   };

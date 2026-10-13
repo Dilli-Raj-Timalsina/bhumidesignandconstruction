@@ -1,4 +1,5 @@
 import type { PageIntros } from "./page-intros";
+import type { ProjectStage } from "./project-stage";
 
 export type SiteContent = {
   companyName: string;
@@ -35,6 +36,7 @@ export type PublicProject = {
   scopeOfWork: string | null;
   executionDetails: string | null;
   projectStatus: string | null;
+  stage: ProjectStage | null;
   status: string;
   startDate: string | null;
   completionDate: string | null;

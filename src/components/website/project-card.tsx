@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import {
+  projectStageLabels,
+  type ProjectStage,
+} from "@/features/content/project-stage";
+
 import { MediaFrame } from "./media-frame";
 
 export type ProjectCardData = {
@@ -8,6 +13,7 @@ export type ProjectCardData = {
   slug: string;
   category?: string | null;
   location?: string | null;
+  stage?: ProjectStage | null;
   description?: string | null;
   coverImage?: string | null;
 };
@@ -48,8 +54,13 @@ export function ProjectCard({
         />
       </Link>
       <div className={large ? "flex flex-col justify-end py-2" : "pt-4"}>
+        {project.stage && (
+          <p className="w-fit border border-bhumi/25 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-bhumi">
+            {projectStageLabels[project.stage]}
+          </p>
+        )}
         {(project.category || project.location) && (
-          <p className="text-[11px] font-bold uppercase tracking-[0.13em] text-bhumi">
+          <p className="mt-3 text-[11px] font-bold uppercase tracking-[0.13em] text-bhumi">
             {[project.category, project.location].filter(Boolean).join(" · ")}
           </p>
         )}

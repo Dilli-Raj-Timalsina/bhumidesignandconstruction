@@ -15,6 +15,7 @@ import {
 } from "./portfolio";
 import { resolveHeroImagePath } from "./hero-image";
 import { readPageIntros } from "./page-intros";
+import { readProjectStage } from "./project-stage";
 import { publicContentRevalidateSeconds, publicContentTags } from "./cache";
 import type {
   PublicAlbumImage,
@@ -87,6 +88,7 @@ function mapProject(row: Row): PublicProject | null {
     scopeOfWork: text(row.scope_of_work),
     executionDetails: text(row.execution_details),
     projectStatus: text(row.project_status),
+    stage: readProjectStage(row.stage),
     status: text(row.status) ?? "draft",
     startDate: text(row.start_date),
     completionDate: text(row.completion_date),

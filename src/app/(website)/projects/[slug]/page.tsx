@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { GalleryGrid } from "@/components/website/gallery-grid";
 import { MediaFrame } from "@/components/website/media-frame";
 import { ProjectCard } from "@/components/website/project-card";
+import { projectStageLabels } from "@/features/content/project-stage";
 import { getProjectBySlug, getProjects } from "@/features/content/queries";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -49,6 +50,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     )
     .slice(0, 3);
   const facts = [
+    ["Stage", project.stage ? projectStageLabels[project.stage] : null],
     ["Location", project.location],
     ["Client", project.client],
     ["Main contractor", project.mainContractor],
@@ -56,7 +58,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
     ["Start", dateLabel(project.startDate)],
     ["Completion", dateLabel(project.completionDate)],
     ["Manpower", project.manpower],
-    ["Status", project.projectStatus],
+    ["Progress note", project.projectStatus],
   ].filter((entry): entry is [string, string] => Boolean(entry[1]));
 
   return (

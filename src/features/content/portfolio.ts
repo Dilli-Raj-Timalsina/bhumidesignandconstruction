@@ -363,6 +363,7 @@ export const portfolioFallbackProjects: PublicProject[] = [
       "Contract signed: Asar 2083. Work commenced: Shrawan 6, 2083. The site is 25 km off-road from Ghorahi, with drinking water supplied by tanker. The portfolio records labour shortage, material-supply constraints on the off-road access route and two concrete castings completed during monsoon season as key execution conditions.",
     projectStatus:
       "Portfolio status as of Ashwin 4, 2083: CRB and Staff Quarter casting works completed.",
+    stage: "ongoing",
     status: "published",
     startDate: null,
     completionDate: null,
@@ -388,6 +389,7 @@ export const portfolioFallbackProjects: PublicProject[] = [
       "The portfolio records foundation and RCC column works completed up to toe-wall level, 20 days after project commencement. Target completion: 2084/03/15 B.S.",
     projectStatus:
       "Portfolio snapshot: foundation and RCC column works completed up to toe-wall level.",
+    stage: "ongoing",
     status: "published",
     startDate: null,
     completionDate: null,
@@ -413,6 +415,7 @@ export const portfolioFallbackProjects: PublicProject[] = [
       "The portfolio records work as having commenced approximately one month earlier, with superstructure works in progress and roof slab shuttering underway.",
     projectStatus:
       "Portfolio snapshot: superstructure works in progress; roof slab shuttering underway.",
+    stage: "ongoing",
     status: "published",
     startDate: null,
     completionDate: null,
@@ -438,6 +441,7 @@ export const portfolioFallbackProjects: PublicProject[] = [
       "Contract date: 2082/09/25 B.S. Scheduled completion: 2083/06/25 B.S. The portfolio records plastering and finishing works in progress, near completion.",
     projectStatus:
       "Portfolio snapshot: near completion — finishing works in progress.",
+    stage: "ongoing",
     status: "published",
     startDate: null,
     completionDate: null,
@@ -462,6 +466,7 @@ export const portfolioFallbackProjects: PublicProject[] = [
     executionDetails:
       "The portfolio records the structure work as completed on schedule.",
     projectStatus: "Completed on schedule.",
+    stage: "completed",
     status: "published",
     startDate: null,
     completionDate: null,

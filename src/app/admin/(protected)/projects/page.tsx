@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { EmptyState } from "@/components/admin/empty-state";
 import { PageHeader } from "@/components/admin/page-header";
 import { StatusBadge } from "@/components/admin/status-badge";
+import { projectStageLabels } from "@/features/content/project-stage";
 
 type ProjectsPageProps = { searchParams: Promise<{ q?: string | string[] }> };
 
@@ -58,6 +59,7 @@ export default async function ProjectsPage({
               <tr>
                 <th className="px-5 py-3">Project</th>
                 <th className="px-5 py-3">Category</th>
+                <th className="px-5 py-3">Stage</th>
                 <th className="px-5 py-3">Visibility</th>
                 <th className="px-5 py-3">Order</th>
                 <th className="px-5 py-3 text-right">Actions</th>
@@ -77,6 +79,11 @@ export default async function ProjectsPage({
                   </td>
                   <td className="px-5 py-4 text-slate-600">
                     {project.category ?? "—"}
+                  </td>
+                  <td className="px-5 py-4 text-slate-600">
+                    {project.stage
+                      ? projectStageLabels[project.stage]
+                      : "Not set"}
                   </td>
                   <td className="px-5 py-4">
                     <StatusBadge status={project.status} />

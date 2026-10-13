@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { projectStages } from "@/features/content/project-stage";
+
 import {
   checkboxSchema,
   contentStatusSchema,
@@ -27,6 +29,7 @@ export const projectSchema = z
     scope_of_work: nullableText(20_000),
     execution_details: nullableText(20_000),
     project_status: nullableText(80),
+    stage: z.enum(projectStages, "Select a project stage."),
     status: contentStatusSchema.default("draft"),
     published_at: nullablePublishedAtSchema,
     start_date: nullableDateSchema,

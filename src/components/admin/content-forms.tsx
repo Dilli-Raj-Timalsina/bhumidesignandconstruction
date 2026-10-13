@@ -18,6 +18,10 @@ import type {
   AdminService,
 } from "./admin-data";
 import {
+  projectStageLabels,
+  projectStages,
+} from "@/features/content/project-stage";
+import {
   CheckboxField,
   FormActions,
   FormSection,
@@ -93,10 +97,25 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
             name="financing"
             defaultValue={optional(project?.financing)}
           />
+          <SelectField
+            label="Project stage"
+            name="stage"
+            required
+            defaultValue={project?.stage ?? ""}
+          >
+            <option value="" disabled>
+              Select a stage
+            </option>
+            {projectStages.map((stage) => (
+              <option key={stage} value={stage}>
+                {projectStageLabels[stage]}
+              </option>
+            ))}
+          </SelectField>
           <TextField
-            label="Project status"
+            label="Progress note"
             name="project_status"
-            hint="For example, ongoing or completed"
+            hint="Optional detail from the project record"
             defaultValue={optional(project?.projectStatus)}
           />
           <TextAreaField

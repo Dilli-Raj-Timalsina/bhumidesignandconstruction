@@ -3,6 +3,10 @@ import {
   readPageIntros,
   type PageIntros,
 } from "@/features/content/page-intros";
+import {
+  readProjectStage,
+  type ProjectStage,
+} from "@/features/content/project-stage";
 import { createClient } from "@/lib/supabase/server";
 
 type Row = Record<string, unknown>;
@@ -60,6 +64,7 @@ export type AdminProject = {
   scopeOfWork: string | null;
   executionDetails: string | null;
   projectStatus: string | null;
+  stage: ProjectStage | null;
   status: string;
   publishedAt: string | null;
   startDate: string | null;
@@ -176,6 +181,7 @@ function project(source: Row): AdminProject {
     scopeOfWork: text(source.scope_of_work),
     executionDetails: text(source.execution_details),
     projectStatus: text(source.project_status),
+    stage: readProjectStage(source.stage),
     status: text(source.status) ?? "draft",
     publishedAt: text(source.published_at),
     startDate: text(source.start_date),
