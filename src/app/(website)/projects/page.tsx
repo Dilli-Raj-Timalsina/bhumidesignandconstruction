@@ -52,14 +52,11 @@ export default async function ProjectsPage({
 
   return (
     <>
-      <PageIntro page="projects" intro={site.pageIntros.projects} />
-      <section className="py-16 md:py-28">
+      <PageIntro page="projects" intro={site.pageIntros.projects} compact />
+      <section className="pb-14 pt-6 md:pb-20 md:pt-8">
         <div className="site-shell">
-          <nav
-            aria-label="Filter projects by stage"
-            className="mb-12 border-b border-line"
-          >
-            <div className="-mb-px flex gap-7 overflow-x-auto">
+          <nav aria-label="Filter projects by stage" className="mb-7 md:mb-8">
+            <div className="flex gap-1 overflow-x-auto pb-1 sm:gap-2 md:justify-center">
               {tabs.map((tab) => {
                 const active = (stage ?? "all") === tab.value;
                 return (
@@ -67,21 +64,23 @@ export default async function ProjectsPage({
                     key={tab.value}
                     href={tab.href}
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex shrink-0 items-center gap-2 border-b-2 pb-4 text-sm font-semibold transition-colors ${active ? "border-bhumi text-bhumi" : "border-transparent text-muted hover:text-ink"}`}
+                    aria-label={`${tab.label} projects (${counts[tab.value]})`}
+                    className={`inline-flex min-h-11 shrink-0 items-center justify-center px-3 text-xs font-bold uppercase tracking-[0.08em] transition-colors sm:px-6 sm:text-sm ${active ? "bg-bhumi text-white" : "bg-slate-100 text-ink hover:bg-slate-200"}`}
                   >
                     {tab.label}
-                    <span className="text-xs tabular-nums opacity-65">
-                      {counts[tab.value]}
-                    </span>
                   </Link>
                 );
               })}
             </div>
           </nav>
           {filteredProjects.length > 0 ? (
-            <div className="grid gap-x-7 gap-y-14 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-x-5 gap-y-9 md:grid-cols-2 lg:grid-cols-3">
               {filteredProjects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  variant="listing"
+                />
               ))}
             </div>
           ) : (

@@ -23,8 +23,38 @@ export function ProjectCard({
   variant = "default",
 }: {
   project: ProjectCardData;
-  variant?: "default" | "feature";
+  variant?: "default" | "feature" | "listing";
 }) {
+  if (variant === "listing") {
+    return (
+      <article className="group min-w-0">
+        <Link href={`/projects/${project.slug}`} className="block">
+          <div className="relative aspect-[1.5/1] overflow-hidden bg-canvas">
+            <MediaFrame
+              src={project.coverImage}
+              alt={project.title}
+              className="absolute inset-0 h-full w-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+            {project.stage && (
+              <span className="absolute left-3 top-3 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-bhumi">
+                {projectStageLabels[project.stage]}
+              </span>
+            )}
+          </div>
+          <div className="flex min-h-20 items-stretch">
+            <h2 className="flex min-w-0 flex-1 items-center bg-bhumi px-4 py-3 text-base font-semibold leading-snug tracking-[-0.025em] text-white md:text-lg">
+              {project.title}
+            </h2>
+            <span className="flex w-14 shrink-0 items-center justify-center border-b border-r border-bhumi text-bhumi transition-colors group-hover:bg-bhumi-light">
+              <ArrowUpRight size={20} aria-hidden="true" />
+            </span>
+          </div>
+        </Link>
+      </article>
+    );
+  }
+
   const large = variant === "feature";
   return (
     <article
