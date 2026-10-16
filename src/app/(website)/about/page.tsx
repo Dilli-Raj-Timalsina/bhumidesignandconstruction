@@ -13,6 +13,7 @@ export const generateMetadata = () => getPageIntroMetadata("about", "/about");
 
 export default async function AboutPage() {
   const site = await getSiteContent();
+  const copy = site.editorial;
   return (
     <>
       <PageIntro page="about" intro={site.pageIntros.about} />
@@ -22,14 +23,16 @@ export default async function AboutPage() {
           <div className="relative min-h-[430px] lg:min-h-[620px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI project work"
+              alt={site.aboutImageAlt || "BHUMI project work"}
               className="absolute inset-0 h-full w-full"
               label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 55vw"
             />
           </div>
           <div className="flex flex-col justify-center">
-            <p className="eyebrow">The practice</p>
+            {copy.aboutPracticeEyebrow && (
+              <p className="eyebrow">{copy.aboutPracticeEyebrow}</p>
+            )}
             {site.aboutTitle && (
               <h2 className="section-title mt-5">{site.aboutTitle}</h2>
             )}
@@ -38,64 +41,48 @@ export default async function AboutPage() {
                 {site.aboutContent}
               </div>
             )}
-            <ButtonLink href="/contact" variant="text" className="mt-9 w-fit">
-              Talk about your project <ArrowUpRight size={16} />
-            </ButtonLink>
+            {copy.aboutPracticeCta && (
+              <ButtonLink href="/contact" variant="text" className="mt-9 w-fit">
+                {copy.aboutPracticeCta} <ArrowUpRight size={16} />
+              </ButtonLink>
+            )}
           </div>
         </div>
       </section>
 
-      <section className="border-y border-line bg-canvas py-16 md:py-28">
-        <div className="site-shell">
-          <SectionHeading
-            eyebrow="Current capacity"
-            title={
-              <>
-                Built for active,
-                <br />
-                on-site delivery.
-              </>
-            }
-            description="Organizational capacity as documented in BHUMI’s current company portfolio."
-          />
-          <div className="mt-12 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              [
-                "01",
-                "Er. Shashiram Nakal",
-                "Founder / MD / CEO; civil engineering graduate of Pulchowk Campus, Institute of Engineering.",
-              ],
-              [
-                "02",
-                "3 site supervisors / overseers",
-                "Currently deployed across active sites.",
-              ],
-              [
-                "03",
-                "Approx. 40 workers",
-                "Across running sites in the portfolio snapshot.",
-              ],
-              [
-                "04",
-                "6 running sites",
-                "Current active-site count documented in BHUMI’s company portfolio.",
-              ],
-            ].map(([number, title, copy]) => (
-              <article key={number} className="bg-canvas p-7 md:p-8">
-                <p className="text-xs font-bold tracking-[0.08em] text-bhumi">
-                  {number}
-                </p>
-                <h3 className="mt-10 text-2xl font-semibold tracking-[-0.04em] text-ink">
-                  {title}
-                </h3>
-                <p className="mt-4 text-sm leading-7 text-muted">{copy}</p>
-              </article>
-            ))}
+      {(copy.capacityEyebrow ||
+        copy.capacityTitle ||
+        copy.capacityDescription ||
+        copy.capacityCards.length > 0) && (
+        <section className="border-y border-line bg-canvas py-16 md:py-28">
+          <div className="site-shell">
+            <SectionHeading
+              eyebrow={copy.capacityEyebrow}
+              title={copy.capacityTitle}
+              description={copy.capacityDescription}
+            />
+            {copy.capacityCards.length > 0 && (
+              <div className="mt-12 grid gap-px bg-line sm:grid-cols-2 lg:grid-cols-4">
+                {copy.capacityCards.map(({ title, description }, index) => (
+                  <article key={index} className="bg-canvas p-7 md:p-8">
+                    <p className="text-xs font-bold tracking-[0.08em] text-bhumi">
+                      {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="mt-10 text-2xl font-semibold tracking-[-0.04em] text-ink">
+                      {title}
+                    </h3>
+                    <p className="mt-4 text-sm leading-7 text-muted">
+                      {description}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
-      <ProcessTimeline />
-      <CtaSection />
+        </section>
+      )}
+      <ProcessTimeline content={copy} />
+      <CtaSection content={copy} />
     </>
   );
 }

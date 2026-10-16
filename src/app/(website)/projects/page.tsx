@@ -97,9 +97,11 @@ export default async function ProjectsPage({
               }
             />
           )}
-          <ButtonLink href="/contact" variant="text" className="mt-12">
-            Have a project in mind? <ArrowUpRight size={16} />
-          </ButtonLink>
+          {site.editorial.projectsPageCta && (
+            <ButtonLink href="/contact" variant="text" className="mt-12">
+              {site.editorial.projectsPageCta} <ArrowUpRight size={16} />
+            </ButtonLink>
+          )}
         </div>
       </section>
     </>

@@ -19,19 +19,24 @@ export default async function ServicesPage() {
       <section className="py-16 md:py-28">
         <div className="site-shell">
           {services.length > 0 ? (
-            <ServiceOfferings services={services} />
+            <ServiceOfferings
+              services={services}
+              enquireLabel={site.editorial.serviceEnquiryCta}
+            />
           ) : (
             <ContentEmptyState
               title="Services are being updated."
               detail="Published services will appear here shortly."
             />
           )}
-          <ButtonLink href="/contact" variant="text" className="mt-10">
-            Discuss a project <ArrowUpRight size={16} />
-          </ButtonLink>
+          {site.editorial.servicesPageCta && (
+            <ButtonLink href="/contact" variant="text" className="mt-10">
+              {site.editorial.servicesPageCta} <ArrowUpRight size={16} />
+            </ButtonLink>
+          )}
         </div>
       </section>
-      <CtaSection />
+      <CtaSection content={site.editorial} />
     </>
   );
 }

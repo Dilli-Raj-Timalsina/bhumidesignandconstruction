@@ -23,7 +23,7 @@ function formatNpr(value: number) {
   return `NPR ${format(value)}`;
 }
 
-export function EmiCalculator() {
+export function EmiCalculator({ rateNote }: { rateNote: string }) {
   const [amount, setAmount] = useState("5000000");
   const [annualRate, setAnnualRate] = useState("12");
   const [years, setYears] = useState("5");
@@ -203,7 +203,7 @@ export function EmiCalculator() {
         title="Quick reference"
         description="Formula and indicative annual interest-rate ranges in Nepal."
       >
-        <div className="mt-6 grid gap-3 md:grid-cols-2">
+        <div className={`mt-6 grid gap-3 ${rateNote ? "md:grid-cols-2" : ""}`}>
           <ReferenceCard title="EMI formula">
             <p className="font-mono text-xs text-ink">
               EMI = P × r × (1 + r)ⁿ / ((1 + r)ⁿ − 1)
@@ -212,12 +212,11 @@ export function EmiCalculator() {
               P = principal · r = monthly rate · n = total monthly instalments
             </p>
           </ReferenceCard>
-          <ReferenceCard title="Typical Nepal rates">
-            <p>Home / housing loan: 9% – 13%</p>
-            <p>Construction loan: 10% – 14%</p>
-            <p>Personal loan: 12% – 18%</p>
-            <p>Vehicle loan: 11% – 15%</p>
-          </ReferenceCard>
+          {rateNote && (
+            <ReferenceCard title="Rate guidance">
+              <p className="whitespace-pre-line">{rateNote}</p>
+            </ReferenceCard>
+          )}
         </div>
         <p className="mt-5 border-t border-line pt-5 text-xs leading-6 text-muted">
           This calculator uses the reducing-balance method. Actual repayment may

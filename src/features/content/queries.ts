@@ -14,6 +14,7 @@ import {
   portfolioFallbackSite,
 } from "./portfolio";
 import { resolveHeroImagePath } from "./hero-image";
+import { readEditorialContent } from "./editorial";
 import { readPageIntros } from "./page-intros";
 import { readProjectStage } from "./project-stage";
 import { publicContentRevalidateSeconds, publicContentTags } from "./cache";
@@ -200,7 +201,14 @@ function mapSite(input: Row | null): SiteContent {
     heroImage: getPublicStorageUrl(
       resolveHeroImagePath(text(row.hero_image_path)),
     ),
+    heroImageAlt: text(row.hero_image_alt),
     aboutImage: getPublicStorageUrl(text(row.about_image_path)),
+    aboutImageAlt: text(row.about_image_alt),
+    highlightsImage:
+      "highlights_image_path" in row
+        ? getPublicStorageUrl(text(row.highlights_image_path))
+        : "/images/marketing/rebar-background.jpg",
+    editorial: readEditorialContent(row.editorial_content),
     pageIntros: readPageIntros(row.page_intros),
     socialLinks:
       typeof social === "object" && social !== null && !Array.isArray(social)

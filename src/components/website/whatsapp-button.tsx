@@ -7,16 +7,20 @@ function toWhatsAppNumber(phone: string | null | undefined): string | null {
   return `977${digits.replace(/^0/, "")}`;
 }
 
-export function WhatsAppButton({ phone }: { phone?: string | null }) {
+export function WhatsAppButton({
+  phone,
+  greeting,
+}: {
+  phone?: string | null;
+  greeting: string;
+}) {
   const number = toWhatsAppNumber(phone);
   if (!number) return null;
-  const message = encodeURIComponent(
-    "Hello BHUMI Design & Construction, I would like to discuss a project.",
-  );
+  const message = encodeURIComponent(greeting);
 
   return (
     <a
-      href={`https://wa.me/${number}?text=${message}`}
+      href={`https://wa.me/${number}${greeting ? `?text=${message}` : ""}`}
       target="_blank"
       rel="noreferrer"
       aria-label="Chat with BHUMI Design & Construction on WhatsApp"

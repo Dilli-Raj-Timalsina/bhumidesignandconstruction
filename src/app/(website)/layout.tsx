@@ -31,7 +31,11 @@ export default async function WebsiteLayout({
   return (
     <div className="min-h-screen bg-white">
       <ContentRefresh />
-      <Header logoSrc={site.logoImage} />
+      <Header
+        logoSrc={site.logoImage}
+        contactLabel={site.editorial.headerCta}
+        pageIntros={site.pageIntros}
+      />
       <main>{children}</main>
       <Footer
         companyName={site.companyName}
@@ -43,7 +47,10 @@ export default async function WebsiteLayout({
         tagline={site.tagline}
         socialLinks={site.socialLinks}
       />
-      <WhatsAppButton phone={site.phone} />
+      <WhatsAppButton
+        phone={site.phone}
+        greeting={site.editorial.whatsappGreeting}
+      />
     </div>
   );
 }

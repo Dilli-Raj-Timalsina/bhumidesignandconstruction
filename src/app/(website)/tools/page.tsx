@@ -10,35 +10,35 @@ import {
 import { PageIntro } from "@/components/website/page-intro";
 import { getPageIntroMetadata } from "@/features/content/metadata";
 import { getSiteContent } from "@/features/content/queries";
+import {
+  pageIntroDefaults,
+  type PageIntroKey,
+} from "@/features/content/page-intros";
 
 export const generateMetadata = () => getPageIntroMetadata("tools", "/tools");
 
 const tools = [
   {
     href: "/tools/brick-calculator",
-    title: "Brick calculator",
-    copy: "Estimate brick and mortar quantities for single or double walls.",
+    key: "brickCalculator",
     icon: Blocks,
   },
   {
     href: "/tools/area-converter",
-    title: "Area converter",
-    copy: "Convert square units alongside Ropani, Aana, Bigha, Kattha, and Dhur.",
+    key: "areaConverter",
     icon: Ruler,
   },
   {
     href: "/tools/concrete-calculator",
-    title: "Concrete calculator",
-    copy: "Plan cement, sand, and aggregate quantities by nominal mix ratio.",
+    key: "concreteCalculator",
     icon: Calculator,
   },
   {
     href: "/tools/emi-calculator",
-    title: "EMI calculator",
-    copy: "Understand a loan's estimated monthly instalment and total payment.",
+    key: "emiCalculator",
     icon: Landmark,
   },
-];
+] satisfies { href: string; key: PageIntroKey; icon: typeof Blocks }[];
 
 export default async function ToolsPage() {
   const site = await getSiteContent();
@@ -49,6 +49,7 @@ export default async function ToolsPage() {
         <div className="site-shell grid gap-px border border-line bg-line md:grid-cols-2">
           {tools.map((tool) => {
             const Icon = tool.icon;
+            const intro = site.pageIntros[tool.key];
             return (
               <Link
                 key={tool.href}
@@ -57,11 +58,13 @@ export default async function ToolsPage() {
               >
                 <Icon className="text-bhumi" size={25} strokeWidth={1.6} />
                 <h2 className="mt-12 text-2xl font-semibold tracking-[-0.04em] text-ink">
-                  {tool.title}
+                  {intro.title || pageIntroDefaults[tool.key].label}
                 </h2>
-                <p className="mt-3 max-w-sm text-sm leading-7 text-muted">
-                  {tool.copy}
-                </p>
+                {intro.subtitle && (
+                  <p className="mt-3 max-w-sm text-sm leading-7 text-muted">
+                    {intro.subtitle}
+                  </p>
+                )}
                 <span className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-bhumi">
                   Open calculator <ArrowUpRight size={16} />
                 </span>

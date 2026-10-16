@@ -1,8 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
+import type { EditorialContent } from "@/features/content/editorial";
 
-export function CtaSection() {
+export function CtaSection({ content }: { content: EditorialContent }) {
   return (
     <section className="overflow-hidden bg-bhumi text-white">
       <div className="site-shell relative grid gap-9 py-16 md:grid-cols-[1fr_auto] md:items-end md:py-24">
@@ -15,23 +16,31 @@ export function CtaSection() {
           aria-hidden="true"
         />
         <div className="relative">
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70">
-            Start a conversation
-          </p>
-          <h2 className="mt-5 max-w-3xl text-[clamp(2.35rem,4.5vw,4.2rem)] font-semibold leading-[1.02] tracking-[-0.055em]">
-            Planning your next project?
-          </h2>
-          <p className="mt-5 max-w-lg text-base leading-7 text-white/75">
-            Let&apos;s discuss how we can build it.
-          </p>
+          {content.ctaEyebrow && (
+            <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/70">
+              {content.ctaEyebrow}
+            </p>
+          )}
+          {content.ctaTitle && (
+            <h2 className="mt-5 max-w-3xl text-[clamp(2.35rem,4.5vw,4.2rem)] font-semibold leading-[1.02] tracking-[-0.055em]">
+              {content.ctaTitle}
+            </h2>
+          )}
+          {content.ctaDescription && (
+            <p className="mt-5 max-w-lg text-base leading-7 text-white/75">
+              {content.ctaDescription}
+            </p>
+          )}
         </div>
-        <ButtonLink
-          href="/contact"
-          variant="outline"
-          className="relative border-white bg-white text-bhumi hover:border-white hover:bg-transparent hover:text-white"
-        >
-          Start a conversation <ArrowUpRight size={17} />
-        </ButtonLink>
+        {content.ctaButton && (
+          <ButtonLink
+            href="/contact"
+            variant="outline"
+            className="relative border-white bg-white text-bhumi hover:border-white hover:bg-transparent hover:text-white"
+          >
+            {content.ctaButton} <ArrowUpRight size={17} />
+          </ButtonLink>
+        )}
       </div>
     </section>
   );

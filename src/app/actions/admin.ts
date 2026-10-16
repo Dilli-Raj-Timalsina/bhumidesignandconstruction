@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/components/admin/require-admin";
 import { publicContentTags } from "@/features/content/cache";
+import { editorialContentSchema } from "@/features/content/editorial";
 import { pageIntroKeys } from "@/features/content/page-intros";
 import {
   getConfiguredAdminCredentials,
@@ -314,9 +315,21 @@ async function deleteMediaPathIfUnused(
       .from("site_settings")
       .select("id", { count: "exact", head: true })
       .eq("about_image_path", path),
+    client
+      .from("site_settings")
+      .select("id", { count: "exact", head: true })
+      .eq("highlights_image_path", path),
   ]);
 
-  if (checks.some((result) => result.error)) {
+  const requiredChecks = checks.slice(0, -1);
+  const highlightsCheck = checks[checks.length - 1];
+  const highlightsColumnMissing =
+    highlightsCheck.error &&
+    ["42703", "PGRST204"].includes(highlightsCheck.error.code);
+  if (
+    requiredChecks.some((result) => result.error) ||
+    (highlightsCheck.error && !highlightsColumnMissing)
+  ) {
     await queueMediaCleanup(client, path, "Could not verify media references.");
     return;
   }
@@ -1299,7 +1312,10 @@ function siteSettingsRecord(formData: FormData, includeId: boolean) {
     hero_title: source.hero_title,
     hero_description: source.hero_description,
     hero_image_path: source.hero_image_path,
+    hero_image_alt: source.hero_image_alt,
     about_image_path: source.about_image_path,
+    about_image_alt: source.about_image_alt,
+    highlights_image_path: source.highlights_image_path,
     about_title: source.about_title,
     about_content: source.about_content,
     page_intros: JSON.stringify(
@@ -1307,6 +1323,7 @@ function siteSettingsRecord(formData: FormData, includeId: boolean) {
         pageIntroKeys.map((key) => [
           key,
           {
+            eyebrow: source[`page_intro_${key}_eyebrow`],
             title: source[`page_intro_${key}_title`],
             subtitle: source[`page_intro_${key}_subtitle`],
           },
@@ -1331,6 +1348,7 @@ export async function updateSiteSettingsAction(formData: FormData) {
     { field: "logo_path", folder: "site" },
     { field: "hero_image_path", folder: "site" },
     { field: "about_image_path", folder: "site" },
+    { field: "highlights_image_path", folder: "site" },
   ] as const;
 
   if ("id" in source) {
@@ -1354,9 +1372,19 @@ export async function updateSiteSettingsAction(formData: FormData) {
       errorRedirect("/admin/settings", uploadErrorMessage(error));
     }
     const nextSettings = { ...updates, ...uploads };
-    const { page_intros: _pageIntros, ...settingsWithoutIntros } = nextSettings;
+    const {
+      page_intros: _pageIntros,
+      hero_image_alt: _heroAlt,
+      about_image_alt: _aboutAlt,
+      highlights_image_path: _highlightsImage,
+      ...settingsWithoutIntros
+    } = nextSettings;
     const settingsToSave =
-      "page_intros" in existing ? nextSettings : settingsWithoutIntros;
+      "editorial_content" in existing
+        ? nextSettings
+        : "page_intros" in existing
+          ? { ...settingsWithoutIntros, page_intros: nextSettings.page_intros }
+          : settingsWithoutIntros;
     const { data, error } = await supabase
       .from("site_settings")
       .update(settingsToSave)
@@ -1387,10 +1415,26 @@ export async function updateSiteSettingsAction(formData: FormData) {
     } catch (error) {
       errorRedirect("/admin/settings", uploadErrorMessage(error));
     }
-    const { page_intros: _pageIntros, ...settingsWithoutIntros } = parsed.data;
-    const { error } = await supabase
-      .from("site_settings")
-      .insert({ ...settingsWithoutIntros, ...uploads });
+    const newSettings = { ...parsed.data, ...uploads };
+    let { error } = await supabase.from("site_settings").insert(newSettings);
+    if (error && ["PGRST204", "42703"].includes(error.code)) {
+      const {
+        hero_image_alt: _heroAlt,
+        about_image_alt: _aboutAlt,
+        highlights_image_path: _highlightsImage,
+        ...settingsWithoutEditorialColumns
+      } = newSettings;
+      ({ error } = await supabase
+        .from("site_settings")
+        .insert(settingsWithoutEditorialColumns));
+      if (error && ["PGRST204", "42703"].includes(error.code)) {
+        const { page_intros: _pageIntros, ...legacySettings } =
+          settingsWithoutEditorialColumns;
+        ({ error } = await supabase
+          .from("site_settings")
+          .insert(legacySettings));
+      }
+    }
     if (error)
       await Promise.all(
         Object.values(uploads).map((path) =>
@@ -1401,6 +1445,37 @@ export async function updateSiteSettingsAction(formData: FormData) {
   }
   revalidateSettings();
   successRedirect("/admin/settings", "Settings saved.");
+}
+
+export async function updateEditorialContentAction(formData: FormData) {
+  await requireAdmin();
+  let submitted: unknown;
+  try {
+    submitted = JSON.parse(String(formData.get("editorial_content") ?? ""));
+  } catch {
+    errorRedirect("/admin/page-content", "Page content could not be read.");
+  }
+  const parsed = editorialContentSchema.safeParse(submitted);
+  if (!parsed.success)
+    errorRedirect(
+      "/admin/page-content",
+      validationMessage(parsed.error.issues),
+    );
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("site_settings")
+    .update({ editorial_content: parsed.data })
+    .eq("settings_key", "default")
+    .select("id")
+    .maybeSingle();
+  if (error || !data)
+    errorRedirect(
+      "/admin/page-content",
+      "Page content could not be saved. Apply the editorial content migration first.",
+    );
+  revalidateSettings();
+  successRedirect("/admin/page-content", "Page content saved.");
 }
 
 export async function updateContactDetailsAction(formData: FormData) {

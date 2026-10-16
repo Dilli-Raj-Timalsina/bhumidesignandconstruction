@@ -13,7 +13,7 @@ export default async function EmiCalculatorPage() {
       <PageIntro page="emiCalculator" intro={site.pageIntros.emiCalculator} />
       <section className="py-12 md:py-20">
         <div className="site-shell">
-          <EmiCalculator />
+          <EmiCalculator rateNote={site.editorial.emiRateNote} />
         </div>
       </section>
     </>

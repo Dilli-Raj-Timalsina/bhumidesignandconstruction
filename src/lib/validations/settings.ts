@@ -33,7 +33,11 @@ const pageIntrosSchema = z.preprocess(
   z.record(
     z.enum(pageIntroKeys as [PageIntroKey, ...PageIntroKey[]]),
     z
-      .object({ title: nullableText(240), subtitle: nullableText(2_000) })
+      .object({
+        eyebrow: nullableText(120),
+        title: nullableText(240),
+        subtitle: nullableText(2_000),
+      })
       .strict(),
   ),
 );
@@ -87,7 +91,10 @@ export const siteSettingsSchema = z
     hero_title: nullableText(240),
     hero_description: nullableText(2_000),
     hero_image_path: nullableStoragePathSchema,
+    hero_image_alt: nullableText(240),
     about_image_path: nullableStoragePathSchema,
+    about_image_alt: nullableText(240),
+    highlights_image_path: nullableStoragePathSchema,
     about_title: nullableText(240),
     about_content: nullableText(20_000),
     page_intros: pageIntrosSchema,

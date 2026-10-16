@@ -13,7 +13,8 @@ export function PageIntro({
   intro: PageIntros[PageIntroKey];
   compact?: boolean;
 }) {
-  const { eyebrow, label } = pageIntroDefaults[page];
+  const { label } = pageIntroDefaults[page];
+  const { eyebrow } = intro;
   const isTool =
     page === "tools" || page.endsWith("Calculator") || page === "areaConverter";
   if (!intro.title && !intro.subtitle) {
@@ -25,7 +26,7 @@ export function PageIntro({
       className={`border-b border-line bg-canvas ${compact ? "py-9 md:py-12" : isTool ? "py-14 md:py-20" : "py-16 md:py-24"}`}
     >
       <div className="site-shell">
-        <p className="eyebrow">{eyebrow}</p>
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
         {intro.title ? (
           <h1
             className={

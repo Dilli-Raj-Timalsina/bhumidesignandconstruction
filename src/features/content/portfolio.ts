@@ -9,6 +9,7 @@ import type {
 } from "./types";
 import { defaultHeroImagePath } from "./hero-image";
 import { readPageIntros } from "./page-intros";
+import { editorialDefaults } from "./editorial";
 
 /**
  * Portfolio-backed content used when the CMS has not been configured.
@@ -282,8 +283,12 @@ export const portfolioFallbackSite: SiteContent = {
   heroDescription:
     "Turnkey and civil contracting works for private residential clients and institutional infrastructure projects.",
   heroImage: defaultHeroImagePath,
+  heroImageAlt: "BHUMI construction project site",
   aboutImage: "/images/portfolio/hari-pariyar-complete.jpg",
+  aboutImageAlt: "Completed Hari Bahadur Pariyar building",
+  highlightsImage: "/images/marketing/rebar-background.jpg",
   pageIntros: readPageIntros(null),
+  editorial: editorialDefaults,
   socialLinks: {},
   defaultSeoTitle:
     "BHUMI Design & Construction | Civil Engineering & Construction Solutions",

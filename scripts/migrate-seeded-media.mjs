@@ -186,6 +186,11 @@ async function migrateSeededMedia() {
       "site_settings",
       "about_image_path",
     ),
+    siteHighlights: await updatePathColumn(
+      supabase,
+      "site_settings",
+      "highlights_image_path",
+    ),
     projects: await updatePathColumn(supabase, "projects", "cover_image_path"),
     projectImages: await updatePathColumn(
       supabase,
@@ -210,6 +215,7 @@ async function migrateSeededMedia() {
     ["site_settings", "logo_path"],
     ["site_settings", "hero_image_path"],
     ["site_settings", "about_image_path"],
+    ["site_settings", "highlights_image_path"],
     ["projects", "cover_image_path"],
     ["project_images", "image_path"],
     ["services", "cover_image_path"],

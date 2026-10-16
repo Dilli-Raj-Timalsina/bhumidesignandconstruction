@@ -52,12 +52,19 @@ export default async function ContactPage() {
         <div className="site-shell">
           <div className="grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(430px,1.2fr)] lg:gap-24">
             <div>
-              <p className="eyebrow">Start a conversation</p>
-              <h2 className="section-title mt-5">Start with the scope.</h2>
-              <p className="mt-6 max-w-md text-base leading-8 text-muted">
-                Share your requirements and the team will respond using the
-                details below.
-              </p>
+              {site.editorial.contactEyebrow && (
+                <p className="eyebrow">{site.editorial.contactEyebrow}</p>
+              )}
+              {site.editorial.contactTitle && (
+                <h2 className="section-title mt-5">
+                  {site.editorial.contactTitle}
+                </h2>
+              )}
+              {site.editorial.contactDescription && (
+                <p className="mt-6 max-w-md text-base leading-8 text-muted">
+                  {site.editorial.contactDescription}
+                </p>
+              )}
               <div className="mt-10 space-y-6">
                 {contacts.map(({ icon: Icon, label, value, href }) => (
                   <div key={label} className="flex gap-4">

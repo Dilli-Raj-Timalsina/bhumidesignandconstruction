@@ -1,5 +1,9 @@
 import { defaultHeroImagePath } from "@/features/content/hero-image";
 import {
+  readEditorialContent,
+  type EditorialContent,
+} from "@/features/content/editorial";
+import {
   readPageIntros,
   type PageIntros,
 } from "@/features/content/page-intros";
@@ -157,11 +161,16 @@ export type AdminSettings = {
   heroTitle: string | null;
   heroDescription: string | null;
   heroImagePath: string | null;
+  heroImageAlt: string | null;
   aboutImagePath: string | null;
+  aboutImageAlt: string | null;
+  highlightsImagePath: string | null;
   aboutTitle: string | null;
   aboutContent: string | null;
   pageIntrosAvailable: boolean;
   pageIntros: PageIntros;
+  editorialAvailable: boolean;
+  editorial: EditorialContent;
   socialLinks: Record<string, string>;
   defaultSeoTitle: string | null;
   defaultSeoDescription: string | null;
@@ -465,11 +474,16 @@ export async function getAdminSettings(): Promise<AdminSettings> {
     heroTitle: source ? text(source.hero_title) : null,
     heroDescription: source ? text(source.hero_description) : null,
     heroImagePath: source ? text(source.hero_image_path) : defaultHeroImagePath,
+    heroImageAlt: source ? text(source.hero_image_alt) : null,
     aboutImagePath: source ? text(source.about_image_path) : null,
+    aboutImageAlt: source ? text(source.about_image_alt) : null,
+    highlightsImagePath: source ? text(source.highlights_image_path) : null,
     aboutTitle: source ? text(source.about_title) : null,
     aboutContent: source ? text(source.about_content) : null,
     pageIntrosAvailable: Boolean(source && "page_intros" in source),
     pageIntros: readPageIntros(source?.page_intros),
+    editorialAvailable: Boolean(source && "editorial_content" in source),
+    editorial: readEditorialContent(source?.editorial_content),
     socialLinks,
     defaultSeoTitle: source ? text(source.default_seo_title) : null,
     defaultSeoDescription: source ? text(source.default_seo_description) : null,

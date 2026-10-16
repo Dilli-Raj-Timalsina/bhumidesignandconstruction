@@ -1,4 +1,5 @@
 import type { PageIntros } from "./page-intros";
+import type { EditorialContent } from "./editorial";
 import type { ProjectStage } from "./project-stage";
 
 export type SiteContent = {
@@ -16,8 +17,12 @@ export type SiteContent = {
   heroTitle: string | null;
   heroDescription: string | null;
   heroImage: string | null;
+  heroImageAlt: string | null;
   aboutImage: string | null;
+  aboutImageAlt: string | null;
+  highlightsImage: string | null;
   pageIntros: PageIntros;
+  editorial: EditorialContent;
   socialLinks: Record<string, string>;
   defaultSeoTitle: string | null;
   defaultSeoDescription: string | null;

@@ -37,6 +37,7 @@ export default async function HomePage() {
     ],
   );
   const galleryImages = getAllGalleryImages(albums).slice(0, 8);
+  const copy = site.editorial;
 
   return (
     <>
@@ -45,7 +46,7 @@ export default async function HomePage() {
           <>
             <Image
               src={site.heroImage}
-              alt="BHUMI project work"
+              alt={site.heroImageAlt || "BHUMI project work"}
               fill
               priority
               sizes="100vw"
@@ -59,10 +60,12 @@ export default async function HomePage() {
         )}
         <div className="site-shell relative z-10 flex min-h-[calc(100svh-76px)] flex-col justify-center pb-24 pt-16 sm:py-28">
           <div className="max-w-[960px] animate-soft-rise">
-            <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">
-              <span className="h-px w-7 bg-white/80" aria-hidden="true" />
-              Civil engineering + construction
-            </p>
+            {copy.homeHeroEyebrow && (
+              <p className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-white/80">
+                <span className="h-px w-7 bg-white/80" aria-hidden="true" />
+                {copy.homeHeroEyebrow}
+              </p>
+            )}
             {site.heroTitle ? (
               <h1 className="mt-6 max-w-[940px] text-[clamp(2.75rem,5.5vw,5rem)] font-semibold leading-[1.02] tracking-[-0.055em] text-white sm:mt-7">
                 {site.heroTitle}
@@ -75,87 +78,87 @@ export default async function HomePage() {
                 {site.heroDescription}
               </p>
             )}
-            <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
-              <ButtonLink
-                href="/projects"
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                View projects <ArrowUpRight size={17} aria-hidden="true" />
-              </ButtonLink>
-              <ButtonLink
-                href="/contact"
-                size="lg"
-                variant="outline"
-                className="w-full border-white/75 text-white hover:border-white hover:bg-white hover:text-ink sm:w-auto"
-              >
-                Contact us
-              </ButtonLink>
-            </div>
+            {(copy.homePrimaryCta || copy.homeSecondaryCta) && (
+              <div className="mt-7 flex flex-col gap-3 sm:mt-9 sm:flex-row">
+                {copy.homePrimaryCta && (
+                  <ButtonLink
+                    href="/projects"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    {copy.homePrimaryCta}{" "}
+                    <ArrowUpRight size={17} aria-hidden="true" />
+                  </ButtonLink>
+                )}
+                {copy.homeSecondaryCta && (
+                  <ButtonLink
+                    href="/contact"
+                    size="lg"
+                    variant="outline"
+                    className="w-full border-white/75 text-white hover:border-white hover:bg-white hover:text-ink sm:w-auto"
+                  >
+                    {copy.homeSecondaryCta}
+                  </ButtonLink>
+                )}
+              </div>
+            )}
           </div>
-          <a
-            href="#home-highlights"
-            className="group absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75 transition-colors hover:text-white md:bottom-6"
-          >
-            <span>Scroll to explore</span>
-            <ArrowDown
-              size={15}
-              strokeWidth={1.7}
-              aria-hidden="true"
-              className="motion-safe:animate-scroll-cue"
-            />
-          </a>
+          {copy.homeScrollLabel && (
+            <a
+              href="#home-highlights"
+              className="group absolute bottom-4 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75 transition-colors hover:text-white md:bottom-6"
+            >
+              <span>{copy.homeScrollLabel}</span>
+              <ArrowDown
+                size={15}
+                strokeWidth={1.7}
+                aria-hidden="true"
+                className="motion-safe:animate-scroll-cue"
+              />
+            </a>
+          )}
         </div>
       </section>
 
       <div id="home-highlights" className="scroll-mt-[76px]">
-        <CompanyHighlights />
+        <CompanyHighlights
+          highlights={copy.highlights}
+          backgroundImage={site.highlightsImage}
+        />
       </div>
 
       <section className="bg-canvas py-16 md:py-24">
         <div className="site-shell">
           <div className="grid gap-8 md:grid-cols-[0.75fr_1.25fr] md:gap-16">
-            <p className="eyebrow self-start">Our practice</p>
+            {copy.practiceEyebrow && (
+              <p className="eyebrow self-start">{copy.practiceEyebrow}</p>
+            )}
             <div>
               {site.description && (
                 <p className="max-w-3xl text-[clamp(1.7rem,3vw,2.8rem)] font-semibold leading-[1.18] tracking-[-0.045em] text-ink">
                   {site.description}
                 </p>
               )}
-              <div className="mt-10 grid border-t border-line sm:grid-cols-3">
-                {[
-                  [
-                    "01",
-                    "Civil engineering-led",
-                    "Founded and led by Er. Shashiram Nakal, a Pulchowk Campus civil engineering graduate.",
-                  ],
-                  [
-                    "02",
-                    "Built to execute",
-                    "Civil and structural work spanning RCC, masonry, foundations, and substation civil works.",
-                  ],
-                  [
-                    "03",
-                    "On-site capacity",
-                    "Three site supervisors / overseers and approximately 40 workers across running sites.",
-                  ],
-                ].map(([number, title, description]) => (
-                  <div
-                    key={number}
-                    className="border-b border-line py-5 pr-5 sm:border-b-0 sm:border-r sm:px-6 sm:first:pl-0 sm:last:border-r-0"
-                  >
-                    <p className="text-xs font-bold tracking-[0.08em] text-bhumi">
-                      {number}
-                    </p>
-                    <p className="mt-5 text-lg font-semibold tracking-[-0.025em] text-ink">
-                      {title}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-muted">
-                      {description}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              {copy.practiceCards.length > 0 && (
+                <div className="mt-10 grid border-t border-line sm:grid-cols-3">
+                  {copy.practiceCards.map(({ title, description }, index) => (
+                    <div
+                      key={index}
+                      className="border-b border-line py-5 pr-5 sm:border-b-0 sm:border-r sm:px-6 sm:first:pl-0 sm:last:border-r-0"
+                    >
+                      <p className="text-xs font-bold tracking-[0.08em] text-bhumi">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                      <p className="mt-5 text-lg font-semibold tracking-[-0.025em] text-ink">
+                        {title}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-muted">
+                        {description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -166,14 +169,16 @@ export default async function HomePage() {
           <div className="relative min-h-[380px] md:min-h-[530px]">
             <MediaFrame
               src={site.aboutImage}
-              alt="BHUMI project work"
+              alt={site.aboutImageAlt || "BHUMI project work"}
               className="absolute inset-0 h-full w-full"
               label="BHUMI project work"
               sizes="(max-width: 1024px) 100vw, 45vw"
             />
           </div>
           <div className="flex flex-col justify-center py-2">
-            <p className="eyebrow">About BHUMI</p>
+            {copy.homeAboutEyebrow && (
+              <p className="eyebrow">{copy.homeAboutEyebrow}</p>
+            )}
             {site.aboutTitle && (
               <h2 className="section-title mt-5 max-w-xl">{site.aboutTitle}</h2>
             )}
@@ -182,9 +187,11 @@ export default async function HomePage() {
                 {site.aboutContent}
               </p>
             )}
-            <ButtonLink href="/about" variant="text" className="mt-8 w-fit">
-              About Bhumi <ArrowUpRight size={16} />
-            </ButtonLink>
+            {copy.homeAboutCta && (
+              <ButtonLink href="/about" variant="text" className="mt-8 w-fit">
+                {copy.homeAboutCta} <ArrowUpRight size={16} />
+              </ButtonLink>
+            )}
           </div>
         </div>
       </section>
@@ -192,19 +199,16 @@ export default async function HomePage() {
       <section className="border-y border-line bg-white py-16 md:py-28">
         <div className="site-shell">
           <SectionHeading
-            eyebrow="Services"
-            title={
-              <>
-                From first sketch
-                <br />
-                to final handover.
-              </>
-            }
-            description="Practical support for every stage of your project — from early advice and design through construction, quality checks, and handover."
+            eyebrow={copy.homeServicesEyebrow}
+            title={copy.homeServicesTitle}
+            description={copy.homeServicesDescription}
           />
           <div className="mt-10 md:mt-14">
             {services.length > 0 ? (
-              <ServiceOfferings services={services} />
+              <ServiceOfferings
+                services={services}
+                enquireLabel={copy.serviceEnquiryCta}
+              />
             ) : (
               <ContentEmptyState
                 title="Services are being updated."
@@ -212,9 +216,11 @@ export default async function HomePage() {
               />
             )}
           </div>
-          <ButtonLink href="/services" variant="text" className="mt-8">
-            Explore services <ArrowUpRight size={16} />
-          </ButtonLink>
+          {copy.homeServicesCta && (
+            <ButtonLink href="/services" variant="text" className="mt-8">
+              {copy.homeServicesCta} <ArrowUpRight size={16} />
+            </ButtonLink>
+          )}
         </div>
       </section>
 
@@ -222,14 +228,18 @@ export default async function HomePage() {
         <div className="site-shell">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="eyebrow">Selected work</p>
-              <h2 className="section-title mt-5">
-                Work in progress. Work delivered.
-              </h2>
+              {copy.homeProjectsEyebrow && (
+                <p className="eyebrow">{copy.homeProjectsEyebrow}</p>
+              )}
+              {copy.homeProjectsTitle && (
+                <h2 className="section-title mt-5">{copy.homeProjectsTitle}</h2>
+              )}
             </div>
-            <ButtonLink href="/projects" variant="text">
-              All projects <ArrowUpRight size={16} />
-            </ButtonLink>
+            {copy.homeProjectsCta && (
+              <ButtonLink href="/projects" variant="text">
+                {copy.homeProjectsCta} <ArrowUpRight size={16} />
+              </ButtonLink>
+            )}
           </div>
           <div className="mt-10 md:mt-14">
             {featuredProject ? (
@@ -264,12 +274,18 @@ export default async function HomePage() {
         <div className="site-shell">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="eyebrow">In the field</p>
-              <h2 className="section-title mt-5">A closer look at the work.</h2>
+              {copy.homeGalleryEyebrow && (
+                <p className="eyebrow">{copy.homeGalleryEyebrow}</p>
+              )}
+              {copy.homeGalleryTitle && (
+                <h2 className="section-title mt-5">{copy.homeGalleryTitle}</h2>
+              )}
             </div>
-            <ButtonLink href="/gallery" variant="text">
-              Open gallery <ArrowUpRight size={16} />
-            </ButtonLink>
+            {copy.homeGalleryCta && (
+              <ButtonLink href="/gallery" variant="text">
+                {copy.homeGalleryCta} <ArrowUpRight size={16} />
+              </ButtonLink>
+            )}
           </div>
           <div className="mt-10 md:mt-14">
             {galleryImages.length > 0 ? (
@@ -284,7 +300,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <CtaSection />
+      <CtaSection content={copy} />
     </>
   );
 }

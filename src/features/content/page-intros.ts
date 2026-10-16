@@ -81,7 +81,7 @@ export const pageIntroDefaults = {
 export type PageIntroKey = keyof typeof pageIntroDefaults;
 export type PageIntros = Record<
   PageIntroKey,
-  { title: string | null; subtitle: string | null }
+  { eyebrow: string | null; title: string | null; subtitle: string | null }
 >;
 
 export const pageIntroKeys = Object.keys(pageIntroDefaults) as PageIntroKey[];
@@ -103,6 +103,10 @@ export function readPageIntros(value: unknown): PageIntros {
       return [
         key,
         {
+          eyebrow:
+            fields.eyebrow === null || typeof fields.eyebrow === "string"
+              ? fields.eyebrow
+              : defaults.eyebrow,
           title:
             fields.title === null || typeof fields.title === "string"
               ? fields.title

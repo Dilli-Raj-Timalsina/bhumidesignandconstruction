@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ButtonLink } from "@/components/ui/button";
+import type { PageIntros } from "@/features/content/page-intros";
 import { cn } from "@/lib/utils";
 
 import { BrandMark } from "./brand-mark";
@@ -21,27 +22,35 @@ const links = [
 const toolLinks = [
   {
     href: "/tools/brick-calculator",
+    key: "brickCalculator",
     label: "Brick calculator",
-    description: "Estimate bricks and mortar for a wall.",
   },
   {
     href: "/tools/area-converter",
+    key: "areaConverter",
     label: "Area converter",
-    description: "Convert standard and Nepal land units.",
   },
   {
     href: "/tools/concrete-calculator",
+    key: "concreteCalculator",
     label: "Concrete calculator",
-    description: "Estimate concrete materials by mix grade.",
   },
   {
     href: "/tools/emi-calculator",
+    key: "emiCalculator",
     label: "EMI calculator",
-    description: "Plan a monthly loan repayment.",
   },
-];
+] as const;
 
-export function Header({ logoSrc }: { logoSrc?: string | null }) {
+export function Header({
+  logoSrc,
+  contactLabel,
+  pageIntros,
+}: {
+  logoSrc?: string | null;
+  contactLabel: string;
+  pageIntros: PageIntros;
+}) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -110,9 +119,11 @@ export function Header({ logoSrc }: { logoSrc?: string | null }) {
                             <span className="block text-sm font-semibold text-ink">
                               {tool.label}
                             </span>
-                            <span className="mt-0.5 block text-xs leading-5 text-muted">
-                              {tool.description}
-                            </span>
+                            {pageIntros[tool.key].subtitle && (
+                              <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-muted">
+                                {pageIntros[tool.key].subtitle}
+                              </span>
+                            )}
                           </Link>
                         ))}
                       </div>
@@ -124,11 +135,13 @@ export function Header({ logoSrc }: { logoSrc?: string | null }) {
           })}
         </nav>
 
-        <div className="hidden lg:block">
-          <ButtonLink href="/contact" size="sm">
-            Start a project
-          </ButtonLink>
-        </div>
+        {contactLabel && (
+          <div className="hidden lg:block">
+            <ButtonLink href="/contact" size="sm">
+              {contactLabel}
+            </ButtonLink>
+          </div>
+        )}
 
         <button
           type="button"
@@ -182,14 +195,16 @@ export function Header({ logoSrc }: { logoSrc?: string | null }) {
                 )}
               </div>
             ))}
-            <ButtonLink
-              href="/contact"
-              onClick={() => setOpen(false)}
-              className="mt-8 w-full"
-              size="lg"
-            >
-              Start a project
-            </ButtonLink>
+            {contactLabel && (
+              <ButtonLink
+                href="/contact"
+                onClick={() => setOpen(false)}
+                className="mt-8 w-full"
+                size="lg"
+              >
+                {contactLabel}
+              </ButtonLink>
+            )}
           </nav>
         </div>
       )}

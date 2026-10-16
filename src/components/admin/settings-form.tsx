@@ -125,6 +125,14 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           previewUrl={publicMediaUrl(settings.aboutImagePath)}
           label="About image"
         />
+        {settings.editorialAvailable && (
+          <TextField
+            label="About image description"
+            name="about_image_alt"
+            hint="Describe the actual image for screen readers."
+            defaultValue={optional(settings.aboutImageAlt)}
+          />
+        )}
       </FormSection>
 
       <FormSection
@@ -155,7 +163,29 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
           clearLabel="Remove photo"
           hint="Use an approved wide project photo. Replace or remove it here, then save changes. Without a photo, the hero has a charcoal background."
         />
+        {settings.editorialAvailable && (
+          <TextField
+            label="Hero photo description"
+            name="hero_image_alt"
+            hint="Describe the actual project shown in the photo."
+            defaultValue={optional(settings.heroImageAlt)}
+          />
+        )}
       </FormSection>
+
+      {settings.editorialAvailable && (
+        <FormSection
+          title="Homepage statistics backdrop"
+          description="This image sits behind the statistic cards. Use an approved project detail photo, or clear it for a plain background. Edit the statistics in Page content."
+        >
+          <ImageUploader
+            name="highlights_image_path"
+            value={optional(settings.highlightsImagePath)}
+            previewUrl={publicMediaUrl(settings.highlightsImagePath)}
+            label="Background photo"
+          />
+        </FormSection>
+      )}
 
       {settings.pageIntrosAvailable && (
         <FormSection
@@ -170,6 +200,11 @@ export function SettingsForm({ settings }: { settings: AdminSettings }) {
               <legend className="text-sm font-semibold text-ink">
                 {pageIntroDefaults[key].label}
               </legend>
+              <TextField
+                label="Eyebrow"
+                name={`page_intro_${key}_eyebrow`}
+                defaultValue={optional(settings.pageIntros[key].eyebrow)}
+              />
               <TextField
                 label="Title"
                 name={`page_intro_${key}_title`}

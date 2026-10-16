@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
-import { companyHighlights, processSteps } from "@/features/content/marketing";
+import type { EditorialContent } from "@/features/content/editorial";
 import type { PublicService } from "@/features/content/types";
 
 const serviceIcons = {
@@ -34,10 +34,11 @@ const processIcons = {
   handover: KeyRound,
 };
 
-function RebarBackdrop() {
+function RebarBackdrop({ src }: { src: string | null }) {
+  if (!src) return null;
   return (
     <Image
-      src="/images/marketing/rebar-background.jpg"
+      src={src}
       alt=""
       aria-hidden="true"
       fill
@@ -47,14 +48,21 @@ function RebarBackdrop() {
   );
 }
 
-export function CompanyHighlights() {
+export function CompanyHighlights({
+  highlights,
+  backgroundImage,
+}: {
+  highlights: EditorialContent["highlights"];
+  backgroundImage: string | null;
+}) {
+  if (highlights.length === 0) return null;
   return (
     <section className="relative isolate overflow-hidden border-y border-line bg-white">
-      <RebarBackdrop />
+      <RebarBackdrop src={backgroundImage} />
       <div className="site-shell relative z-10 grid grid-cols-2 sm:grid-cols-4">
-        {companyHighlights.map((highlight) => (
+        {highlights.map((highlight, index) => (
           <div
-            key={highlight.label}
+            key={index}
             className="border-b border-line px-5 py-8 text-center last:border-b-0 sm:border-b-0 sm:border-r sm:px-6 sm:py-10 sm:last:border-r-0"
           >
             <p className="text-3xl font-semibold tracking-[-0.055em] text-ink md:text-4xl">
@@ -70,7 +78,13 @@ export function CompanyHighlights() {
   );
 }
 
-export function ServiceOfferings({ services }: { services: PublicService[] }) {
+export function ServiceOfferings({
+  services,
+  enquireLabel,
+}: {
+  services: PublicService[];
+  enquireLabel: string;
+}) {
   return (
     <div className="border-t border-line">
       {services.map((service, index) => {
@@ -109,9 +123,11 @@ export function ServiceOfferings({ services }: { services: PublicService[] }) {
                 {service.description || service.shortDescription}
               </p>
             </div>
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink transition-colors group-hover:text-bhumi md:mt-2">
-              Enquire <ArrowUpRight size={16} aria-hidden="true" />
-            </span>
+            {enquireLabel && (
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-ink transition-colors group-hover:text-bhumi md:mt-2">
+                {enquireLabel} <ArrowUpRight size={16} aria-hidden="true" />
+              </span>
+            )}
           </a>
         );
       })}
@@ -119,44 +135,52 @@ export function ServiceOfferings({ services }: { services: PublicService[] }) {
   );
 }
 
-export function ProcessTimeline() {
+export function ProcessTimeline({ content }: { content: EditorialContent }) {
+  if (content.processSteps.length === 0) return null;
   return (
     <section className="border-y border-line bg-canvas py-16 md:py-28">
       <div className="site-shell">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="eyebrow justify-center">How we work</p>
-          <h2 className="section-title mt-5">Our process</h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-muted md:text-lg">
-            A transparent, step-by-step journey from your first call to the
-            moment you step into your new home.
-          </p>
+          {content.processEyebrow && (
+            <p className="eyebrow justify-center">{content.processEyebrow}</p>
+          )}
+          {content.processTitle && (
+            <h2 className="section-title mt-5">{content.processTitle}</h2>
+          )}
+          {content.processDescription && (
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-muted md:text-lg">
+              {content.processDescription}
+            </p>
+          )}
         </div>
-        <div className="relative mx-auto mt-14 max-w-4xl before:absolute before:bottom-8 before:left-6 before:top-8 before:w-px before:bg-line md:mt-20">
-          {processSteps.map((step) => {
-            const Icon = processIcons[step.icon];
-            return (
-              <article
-                key={step.number}
-                className="relative grid grid-cols-[3rem_minmax(0,1fr)] gap-6 pb-12 last:pb-0 md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-8 md:pb-16"
-              >
-                <span className="relative z-10 grid h-12 w-12 place-items-center border border-line bg-white text-bhumi md:h-14 md:w-14">
-                  <Icon size={20} aria-hidden="true" />
-                </span>
-                <div className="pt-1">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-bhumi">
-                    Step {step.number}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-ink md:text-3xl">
-                    {step.title}
-                  </h3>
-                  <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-                    {step.description}
-                  </p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        {content.processSteps.length > 0 && (
+          <div className="relative mx-auto mt-14 max-w-4xl before:absolute before:bottom-8 before:left-6 before:top-8 before:w-px before:bg-line md:mt-20">
+            {content.processSteps.map((step, index) => {
+              const Icon = processIcons[step.icon];
+              return (
+                <article
+                  key={index}
+                  className="relative grid grid-cols-[3rem_minmax(0,1fr)] gap-6 pb-12 last:pb-0 md:grid-cols-[4.5rem_minmax(0,1fr)] md:gap-8 md:pb-16"
+                >
+                  <span className="relative z-10 grid h-12 w-12 place-items-center border border-line bg-white text-bhumi md:h-14 md:w-14">
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <div className="pt-1">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-bhumi">
+                      Step {String(index + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-ink md:text-3xl">
+                      {step.title}
+                    </h3>
+                    <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
+                      {step.description}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );

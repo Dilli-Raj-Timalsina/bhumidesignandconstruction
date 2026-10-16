@@ -56,8 +56,21 @@ async function isReferenced(client, path) {
       .from("site_settings")
       .select("id", { count: "exact", head: true })
       .eq("about_image_path", path),
+    client
+      .from("site_settings")
+      .select("id", { count: "exact", head: true })
+      .eq("highlights_image_path", path),
   ]);
-  if (checks.some((result) => result.error)) return null;
+  const requiredChecks = checks.slice(0, -1);
+  const highlightsCheck = checks[checks.length - 1];
+  const highlightsColumnMissing =
+    highlightsCheck.error &&
+    ["42703", "PGRST204"].includes(highlightsCheck.error.code);
+  if (
+    requiredChecks.some((result) => result.error) ||
+    (highlightsCheck.error && !highlightsColumnMissing)
+  )
+    return null;
   return checks.some((result) => (result.count ?? 0) > 0);
 }
 

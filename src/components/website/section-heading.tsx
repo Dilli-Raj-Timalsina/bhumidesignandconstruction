@@ -8,7 +8,7 @@ export function SectionHeading({
   align = "left",
 }: {
   eyebrow?: string;
-  title: React.ReactNode;
+  title?: React.ReactNode;
   description?: React.ReactNode;
   className?: string;
   align?: "left" | "right";
@@ -23,7 +23,9 @@ export function SectionHeading({
     >
       <div>
         {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-        <h2 className="section-title mt-5">{title}</h2>
+        {title && (
+          <h2 className="section-title mt-5 whitespace-pre-line">{title}</h2>
+        )}
       </div>
       {description && (
         <div className="self-end text-base leading-8 text-muted md:max-w-md">
