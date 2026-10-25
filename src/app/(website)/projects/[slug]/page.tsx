@@ -145,7 +145,7 @@ export default async function ProjectDetailPage({ params }: PageProps) {
                   className="flex justify-between gap-4 border-t border-line py-4 text-sm"
                 >
                   <span className="text-muted">{label}</span>
-                  <span className="max-w-[58%] text-right font-semibold text-ink">
+                  <span className="max-w-[58%] whitespace-pre-line break-words text-right font-semibold text-ink">
                     {value}
                   </span>
                 </div>

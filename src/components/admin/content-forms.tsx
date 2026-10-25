@@ -66,6 +66,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
             label="Title"
             name="title"
             required
+            maxLength={180}
             defaultValue={optional(project?.title)}
             autoComplete="off"
           />
@@ -74,32 +75,38 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
             name="slug"
             hint="Lowercase URL identifier"
             required
+            maxLength={160}
             defaultValue={optional(project?.slug)}
             autoComplete="off"
           />
           <TextField
             label="Category"
             name="category"
+            maxLength={120}
             defaultValue={optional(project?.category)}
           />
           <TextField
             label="Location"
             name="location"
+            maxLength={240}
             defaultValue={optional(project?.location)}
           />
           <TextField
             label="Client"
             name="client"
+            maxLength={240}
             defaultValue={optional(project?.client)}
           />
           <TextField
             label="Main contractor"
             name="main_contractor"
+            maxLength={240}
             defaultValue={optional(project?.mainContractor)}
           />
           <TextField
             label="Financing"
             name="financing"
+            maxLength={240}
             defaultValue={optional(project?.financing)}
           />
           <SelectField
@@ -117,16 +124,20 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
               </option>
             ))}
           </SelectField>
-          <TextField
+          <TextAreaField
             label="Progress note"
             name="project_status"
-            hint="Optional detail from the project record"
+            hint="500 characters max"
+            className="md:col-span-2"
+            maxLength={500}
             defaultValue={optional(project?.projectStatus)}
+            rows={3}
           />
           <TextAreaField
             label="Overview"
             name="description"
             className="md:col-span-2"
+            maxLength={20_000}
             defaultValue={optional(project?.description)}
             rows={5}
           />
@@ -134,6 +145,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
             label="Scope of work"
             name="scope_of_work"
             className="md:col-span-2"
+            maxLength={20_000}
             defaultValue={optional(project?.scopeOfWork)}
             rows={5}
           />
@@ -141,6 +153,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
             label="Execution details"
             name="execution_details"
             className="md:col-span-2"
+            maxLength={20_000}
             defaultValue={optional(project?.executionDetails)}
             rows={5}
           />
@@ -220,11 +233,13 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
           <TextField
             label="SEO title"
             name="seo_title"
+            maxLength={180}
             defaultValue={optional(project?.seoTitle)}
           />
           <TextAreaField
             label="SEO description"
             name="seo_description"
+            maxLength={320}
             defaultValue={optional(project?.seoDescription)}
             rows={3}
           />

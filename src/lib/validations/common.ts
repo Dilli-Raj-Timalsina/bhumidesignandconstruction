@@ -35,9 +35,21 @@ export function requiredText(label: string, maximumLength: number) {
 }
 
 /** Converts blank optional form fields to null for database inserts and updates. */
-export function nullableText(maximumLength: number) {
+export function nullableText(maximumLength: number, label?: string) {
   return z
-    .union([z.string().trim().max(maximumLength), z.null(), z.undefined()])
+    .union([
+      z
+        .string()
+        .trim()
+        .max(
+          maximumLength,
+          label
+            ? `${label} must be ${maximumLength} characters or fewer.`
+            : undefined,
+        ),
+      z.null(),
+      z.undefined(),
+    ])
     .transform((value) =>
       typeof value === "string" && value.length > 0 ? value : null,
     );

@@ -28,7 +28,7 @@ export const projectSchema = z
     description: nullableText(20_000),
     scope_of_work: nullableText(20_000),
     execution_details: nullableText(20_000),
-    project_status: nullableText(80),
+    project_status: nullableText(500, "Progress note"),
     stage: z.enum(projectStages, "Select a project stage."),
     status: contentStatusSchema.default("draft"),
     published_at: nullablePublishedAtSchema,
