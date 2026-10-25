@@ -3,14 +3,10 @@
 import { ImageIcon, Trash2, Upload } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-
-const acceptedTypes = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-]);
-const maxUploadBytes = 8 * 1024 * 1024;
+import {
+  imageExtensions,
+  maximumImageUploadBytes,
+} from "@/lib/media/image-validation";
 
 export function ImageUploader({
   name,
@@ -18,6 +14,7 @@ export function ImageUploader({
   previewUrl = "",
   label = "Image",
   clearLabel = "Clear field",
+  restoreOnClear = false,
   hint = "Public media: JPEG, PNG, WebP, or AVIF up to 8 MB. The file is uploaded only when you save this form.",
 }: {
   name: string;
@@ -25,6 +22,7 @@ export function ImageUploader({
   previewUrl?: string;
   label?: string;
   clearLabel?: string;
+  restoreOnClear?: boolean;
   hint?: string;
 }) {
   const inputId = useId();
@@ -45,11 +43,13 @@ export function ImageUploader({
 
   function handleFile(file: File | undefined) {
     if (!file) return;
-    if (!acceptedTypes.has(file.type)) {
+    if (!imageExtensions.has(file.type)) {
+      if (fileInput.current) fileInput.current.value = "";
       toast.error("Choose a JPEG, PNG, WebP, or AVIF image.");
       return;
     }
-    if (file.size === 0 || file.size > maxUploadBytes) {
+    if (file.size === 0 || file.size > maximumImageUploadBytes) {
+      if (fileInput.current) fileInput.current.value = "";
       toast.error("Image files must be between 1 byte and 8 MB.");
       return;
     }
@@ -58,8 +58,10 @@ export function ImageUploader({
 
   function clearImage() {
     if (fileInput.current) fileInput.current.value = "";
-    setStoredPath("");
-    setPreviewUrl("");
+    const restoreExisting =
+      restoreOnClear || (preview.startsWith("blob:") && Boolean(value));
+    setStoredPath(restoreExisting ? value : "");
+    setPreviewUrl(restoreExisting ? previewUrl : "");
   }
 
   return (
@@ -68,14 +70,16 @@ export function ImageUploader({
         <label htmlFor={inputId} className="text-sm font-semibold text-ink">
           {label}
         </label>
-        {preview ? (
+        {preview && (!restoreOnClear || preview.startsWith("blob:")) ? (
           <button
             type="button"
             onClick={clearImage}
             className="inline-flex items-center gap-1 text-xs font-semibold text-red-700 hover:text-red-800"
           >
             <Trash2 className="size-3.5" aria-hidden="true" />
-            {clearLabel}
+            {preview.startsWith("blob:") && value
+              ? "Undo selection"
+              : clearLabel}
           </button>
         ) : null}
       </div>

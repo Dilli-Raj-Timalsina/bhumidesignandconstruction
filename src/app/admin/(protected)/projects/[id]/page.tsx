@@ -26,8 +26,17 @@ export default async function ProjectEditPage({
         description="Update content, publication details, and imagery."
         backHref="/admin/projects"
       />
+      <a
+        href="#project-images"
+        className="mb-6 inline-flex text-sm font-semibold text-bhumi hover:text-bhumi-dark"
+      >
+        Manage project photos ({images.length})
+      </a>
       <ProjectForm project={project} />
-      <div className="mt-10 border-t border-line pt-10">
+      <div
+        id="project-images"
+        className="mt-10 scroll-mt-6 border-t border-line pt-10"
+      >
         <ImageCollectionManager
           kind="project"
           parentId={project.id}

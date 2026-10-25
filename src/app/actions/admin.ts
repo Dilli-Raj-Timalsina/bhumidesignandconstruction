@@ -21,6 +21,11 @@ import {
 } from "@/lib/admin/login-rate-limit";
 import { createClient, hasSupabaseEnv } from "@/lib/supabase/server";
 import {
+  imageExtensions,
+  imageFileError,
+  maximumImageUploadBytes,
+} from "@/lib/media/image-validation";
+import {
   galleryAlbumSchema,
   galleryAlbumUpdateSchema,
   galleryImageSchema,
@@ -43,68 +48,11 @@ import type { Database } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 const mediaBucket = "media";
-const maximumUploadBytes = 8 * 1024 * 1024;
-const acceptedImages = new Map<string, string>([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-  ["image/avif", "avif"],
-]);
 type UploadFolder =
   "gallery" | "posts" | "projects" | "services" | "site" | "uploads";
 const adminPathPattern = /^\/admin(?:\/[A-Za-z0-9._~-]+)*$/;
 const managedMediaPathPattern =
   /^(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$/;
-
-function matchesBytes(
-  bytes: Uint8Array,
-  signature: readonly number[],
-  offset = 0,
-): boolean {
-  return signature.every((value, index) => bytes[offset + index] === value);
-}
-
-function containsAscii(bytes: Uint8Array, value: string, offset = 0): boolean {
-  const signature = Array.from(value, (character) => character.charCodeAt(0));
-  for (
-    let index = offset;
-    index <= bytes.length - signature.length;
-    index += 1
-  ) {
-    if (matchesBytes(bytes, signature, index)) return true;
-  }
-  return false;
-}
-
-/**
- * Browsers can forge a file MIME type. Check the leading bytes before placing
- * an upload in the public media bucket as a second, server-side control.
- */
-async function hasMatchingImageSignature(file: File): Promise<boolean> {
-  try {
-    const bytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
-    if (file.type === "image/jpeg")
-      return matchesBytes(bytes, [0xff, 0xd8, 0xff]);
-    if (file.type === "image/png")
-      return matchesBytes(
-        bytes,
-        [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
-      );
-    if (file.type === "image/webp")
-      return (
-        matchesBytes(bytes, [0x52, 0x49, 0x46, 0x46]) &&
-        matchesBytes(bytes, [0x57, 0x45, 0x42, 0x50], 8)
-      );
-    if (file.type === "image/avif")
-      return (
-        matchesBytes(bytes, [0x66, 0x74, 0x79, 0x70], 4) &&
-        (containsAscii(bytes, "avif", 8) || containsAscii(bytes, "avis", 8))
-      );
-  } catch {
-    return false;
-  }
-  return false;
-}
 
 function safeAdminNext(value: FormDataEntryValue | null): string {
   if (
@@ -367,17 +315,10 @@ async function uploadImageFile(
   file: File,
   folder: UploadFolder,
 ): Promise<string> {
-  if (!acceptedImages.has(file.type)) {
-    throw new Error("Only JPEG, PNG, WebP, and AVIF images are supported.");
-  }
-  if (file.size === 0 || file.size > maximumUploadBytes) {
-    throw new Error("Image files must be 8 MB or smaller.");
-  }
-  if (!(await hasMatchingImageSignature(file))) {
-    throw new Error("The file contents do not match the selected image type.");
-  }
+  const validationError = await imageFileError(file);
+  if (validationError) throw new Error(validationError);
 
-  const extension = acceptedImages.get(file.type);
+  const extension = imageExtensions.get(file.type);
   if (!extension) throw new Error("Unsupported image file type.");
   const path = `${folder}/${crypto.randomUUID()}.${extension}`;
   const { error } = await client.storage
@@ -426,6 +367,115 @@ function uploadErrorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : "The image could not be uploaded. Please try again.";
+}
+
+type ProjectUploadKind =
+  "project-create" | "project-update" | "image-create" | "image-update";
+
+const preparedProjectPathPattern =
+  /^projects\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(jpg|png|webp|avif)$/i;
+
+/** Authorize a direct Storage upload after validating the text fields. */
+export async function prepareProjectImageUploadAction(
+  kind: ProjectUploadKind,
+  formData: FormData,
+  contentType: string,
+  size: number,
+): Promise<{ path: string; token: string } | { error: string }> {
+  await requireAdmin();
+  const extension = imageExtensions.get(contentType);
+  if (!extension) return { error: "Choose a JPEG, PNG, WebP, or AVIF image." };
+  if (!Number.isInteger(size) || size <= 0 || size > maximumImageUploadBytes) {
+    return { error: "Image files must be between 1 byte and 8 MB." };
+  }
+
+  const record = formRecord(formData);
+  if (kind === "image-create") record.image_path = "uploads/pending";
+  const schema =
+    kind === "project-create"
+      ? projectSchema
+      : kind === "project-update"
+        ? projectUpdateSchema
+        : kind === "image-create"
+          ? projectImageSchema
+          : projectImageUpdateSchema;
+  const parsed = schema.safeParse(record);
+  if (!parsed.success) return { error: validationMessage(parsed.error.issues) };
+
+  const supabase = await createClient();
+  if (kind !== "project-create") {
+    const id = kind === "project-update" ? record.id : record.project_id;
+    const { data, error } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", String(id))
+      .maybeSingle();
+    if (error || !data) return { error: "The project could not be found." };
+  }
+  if (kind === "image-update") {
+    const { data, error } = await supabase
+      .from("project_images")
+      .select("id")
+      .eq("id", String(record.id))
+      .eq("project_id", String(record.project_id))
+      .maybeSingle();
+    if (error || !data) return { error: "The image could not be found." };
+  }
+
+  await processQueuedMediaCleanups(supabase);
+  const path = `projects/${crypto.randomUUID()}.${extension}`;
+  const { data, error } = await supabase.storage
+    .from(mediaBucket)
+    .createSignedUploadUrl(path);
+  if (error || !data) {
+    return {
+      error: "The image upload could not be prepared. Please try again.",
+    };
+  }
+  const { error: queueError } = await supabase
+    .from("media_cleanup_queue")
+    .upsert({
+      path,
+      eligible_after: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+      last_error: null,
+    });
+  if (queueError) {
+    return {
+      error: "The image upload could not be prepared. Please try again.",
+    };
+  }
+  return { path, token: data.token };
+}
+
+async function verifyPreparedProjectImage(
+  client: SupabaseClient<Database>,
+  path: string,
+): Promise<boolean> {
+  if (!preparedProjectPathPattern.test(path)) return false;
+  const { data: queued, error: queueError } = await client
+    .from("media_cleanup_queue")
+    .select("path")
+    .eq("path", path)
+    .maybeSingle();
+  if (queueError || !queued) return false;
+  const { data, error } = await client.storage.from(mediaBucket).info(path);
+  if (error || !data) return false;
+  const extension = imageExtensions.get(data.contentType ?? "");
+  if (
+    !extension ||
+    !path.endsWith(`.${extension}`) ||
+    typeof data.size !== "number" ||
+    data.size <= 0 ||
+    data.size > maximumImageUploadBytes
+  ) {
+    return false;
+  }
+  const { data: image, error: downloadError } = await client.storage
+    .from(mediaBucket)
+    .download(path);
+  return (
+    !downloadError && Boolean(image) && (await imageFileError(image)) === null
+  );
 }
 
 async function removeNewUploadAfterFailedWrite(
@@ -595,17 +645,32 @@ export async function createProjectAction(formData: FormData) {
   } catch (error) {
     errorRedirect("/admin/projects/new", uploadErrorMessage(error));
   }
+  const preparedPath = !uploadedPath ? parsed.data.cover_image_path : null;
+  if (
+    preparedPath &&
+    !(await verifyPreparedProjectImage(supabase, preparedPath))
+  ) {
+    errorRedirect(
+      "/admin/projects/new",
+      "The cover image upload did not finish. Please try again.",
+    );
+  }
   const project = {
     ...parsed.data,
     ...(uploadedPath ? { cover_image_path: uploadedPath } : {}),
   };
   const { error } = await supabase.from("projects").insert(project);
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error)
+    await removeNewUploadAfterFailedWrite(
+      supabase,
+      uploadedPath ?? preparedPath,
+    );
   if (error)
     errorRedirect(
       "/admin/projects/new",
       "The project could not be created. Check that its slug is unique.",
     );
+  if (preparedPath) await clearQueuedMediaCleanup(supabase, preparedPath);
   revalidateContent("projects", project.slug);
   successRedirect("/admin/projects", "Project created.");
 }
@@ -642,6 +707,19 @@ export async function updateProjectAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.cover_image_path;
+  const preparedPath =
+    !uploadedPath && nextPath && nextPath !== existing.cover_image_path
+      ? nextPath
+      : null;
+  if (
+    preparedPath &&
+    !(await verifyPreparedProjectImage(supabase, preparedPath))
+  ) {
+    errorRedirect(
+      fallbackPath,
+      "The cover image upload did not finish. Please try again.",
+    );
+  }
   const { data, error } = await supabase
     .from("projects")
     .update({ ...updates, cover_image_path: nextPath })
@@ -649,12 +727,16 @@ export async function updateProjectAction(formData: FormData) {
     .select("id")
     .maybeSingle();
   if (error || !data)
-    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+    await removeNewUploadAfterFailedWrite(
+      supabase,
+      uploadedPath ?? preparedPath,
+    );
   if (error || !data)
     errorRedirect(
       fallbackPath,
       "The project could not be saved. Check that its slug is unique.",
     );
+  if (preparedPath) await clearQueuedMediaCleanup(supabase, preparedPath);
   await cleanupReplacedMedia(supabase, existing.cover_image_path, nextPath);
   revalidateContent("projects", updates.slug);
   successRedirect(`/admin/projects/${id}`, "Project saved.");
@@ -702,13 +784,28 @@ export async function createProjectImageAction(formData: FormData) {
   } catch (error) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
+  const preparedPath = !uploadedPath ? parsed.data.image_path : null;
+  if (
+    preparedPath &&
+    !(await verifyPreparedProjectImage(supabase, preparedPath))
+  ) {
+    errorRedirect(
+      fallbackPath,
+      "The image upload did not finish. Please try again.",
+    );
+  }
   const image = {
     ...parsed.data,
     ...(uploadedPath ? { image_path: uploadedPath } : {}),
   };
   const { error } = await supabase.from("project_images").insert(image);
-  if (error) await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+  if (error)
+    await removeNewUploadAfterFailedWrite(
+      supabase,
+      uploadedPath ?? preparedPath,
+    );
   if (error) errorRedirect(fallbackPath, "The image could not be added.");
+  if (preparedPath) await clearQueuedMediaCleanup(supabase, preparedPath);
   revalidateContent("projects");
   successRedirect(fallbackPath, "Project image added.");
 }
@@ -745,6 +842,17 @@ export async function updateProjectImageAction(formData: FormData) {
     errorRedirect(fallbackPath, uploadErrorMessage(error));
   }
   const nextPath = uploadedPath ?? updates.image_path;
+  const preparedPath =
+    !uploadedPath && nextPath !== existing.image_path ? nextPath : null;
+  if (
+    preparedPath &&
+    !(await verifyPreparedProjectImage(supabase, preparedPath))
+  ) {
+    errorRedirect(
+      fallbackPath,
+      "The image upload did not finish. Please try again.",
+    );
+  }
   const { data, error } = await supabase
     .from("project_images")
     .update({ ...updates, image_path: nextPath })
@@ -753,9 +861,13 @@ export async function updateProjectImageAction(formData: FormData) {
     .select("id")
     .maybeSingle();
   if (error || !data)
-    await removeNewUploadAfterFailedWrite(supabase, uploadedPath);
+    await removeNewUploadAfterFailedWrite(
+      supabase,
+      uploadedPath ?? preparedPath,
+    );
   if (error || !data)
     errorRedirect(fallbackPath, "The image could not be saved.");
+  if (preparedPath) await clearQueuedMediaCleanup(supabase, preparedPath);
   await cleanupReplacedMedia(supabase, existing.image_path, nextPath);
   revalidateContent("projects");
   successRedirect(fallbackPath, "Project image saved.");

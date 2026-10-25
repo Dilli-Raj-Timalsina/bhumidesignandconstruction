@@ -31,6 +31,7 @@ import {
 } from "./form-fields";
 import { ImageUploader } from "./image-uploader";
 import { publicMediaUrl } from "./media-url";
+import { ProjectUploadForm } from "./project-upload-form";
 import { RichTextEditor } from "./rich-text-editor";
 
 function optional(value: string | null | undefined): string {
@@ -50,7 +51,11 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
   const action = editing ? updateProjectAction : createProjectAction;
 
   return (
-    <form action={action} className="space-y-5">
+    <ProjectUploadForm
+      action={action}
+      kind={editing ? "project-update" : "project-create"}
+      className="space-y-5"
+    >
       {project ? <input type="hidden" name="id" value={project.id} /> : null}
       <FormLayout>
         <FormSection
@@ -199,6 +204,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
         >
           <div className="md:col-span-2">
             <ImageUploader
+              key={project?.coverImagePath ?? "new-cover"}
               name="cover_image_path"
               value={optional(project?.coverImagePath)}
               previewUrl={publicMediaUrl(project?.coverImagePath)}
@@ -228,7 +234,7 @@ export function ProjectForm({ project }: { project?: AdminProject }) {
           submitLabel={editing ? "Save project" : "Create project"}
         />
       </FormLayout>
-    </form>
+    </ProjectUploadForm>
   );
 }
 

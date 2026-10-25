@@ -12,9 +12,38 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { FormSection, TextField } from "./form-fields";
 import { ImageUploader } from "./image-uploader";
 import { publicMediaUrl } from "./media-url";
+import { ProjectUploadForm } from "./project-upload-form";
 import { SubmitButton } from "./submit-button";
 
-type FormAction = (formData: FormData) => void | Promise<void>;
+type FormAction = (formData: FormData) => Promise<void>;
+
+function ImageForm({
+  kind,
+  mode,
+  action,
+  children,
+  className,
+}: {
+  kind: "project" | "gallery";
+  mode: "create" | "update";
+  action: FormAction;
+  children: React.ReactNode;
+  className: string;
+}) {
+  return kind === "project" ? (
+    <ProjectUploadForm
+      action={action}
+      kind={mode === "create" ? "image-create" : "image-update"}
+      className={className}
+    >
+      {children}
+    </ProjectUploadForm>
+  ) : (
+    <form action={action} className={className}>
+      {children}
+    </form>
+  );
+}
 
 export function ImageCollectionManager({
   kind,
@@ -48,7 +77,12 @@ export function ImageCollectionManager({
         title="Add image"
         description="Images are stored in the media library. Use the display order to control the public sequence."
       >
-        <form action={config.addAction as FormAction} className="contents">
+        <ImageForm
+          kind={kind}
+          mode="create"
+          action={config.addAction}
+          className="contents"
+        >
           <input type="hidden" name={config.idField} value={parentId} />
           <div className="md:col-span-2">
             <ImageUploader name="image_path" label="Image file" />
@@ -70,7 +104,7 @@ export function ImageCollectionManager({
           <div className="flex items-end">
             <SubmitButton pendingLabel="Adding">Add image</SubmitButton>
           </div>
-        </form>
+        </ImageForm>
       </FormSection>
 
       <section className="border border-line bg-white">
@@ -79,8 +113,9 @@ export function ImageCollectionManager({
             Images ({images.length})
           </h2>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Edit captions, alt text, or display order without reuploading the
-            file.
+            {kind === "project"
+              ? "Replace a photo or edit its caption, alt text, and display order."
+              : "Edit captions, alt text, or display order without reuploading the file."}
           </p>
         </div>
         {images.length ? (
@@ -107,8 +142,10 @@ export function ImageCollectionManager({
                       </span>
                     )}
                   </div>
-                  <form
-                    action={config.updateAction as FormAction}
+                  <ImageForm
+                    kind={kind}
+                    mode="update"
+                    action={config.updateAction}
                     className="grid gap-4 sm:grid-cols-2"
                   >
                     <input type="hidden" name="id" value={item.id} />
@@ -117,11 +154,25 @@ export function ImageCollectionManager({
                       name={config.idField}
                       value={parentId}
                     />
-                    <input
-                      type="hidden"
-                      name="image_path"
-                      value={item.imagePath}
-                    />
+                    {kind === "project" ? (
+                      <div className="sm:col-span-2">
+                        <ImageUploader
+                          key={item.imagePath}
+                          name="image_path"
+                          value={item.imagePath}
+                          previewUrl={preview}
+                          label="Replace photo"
+                          clearLabel="Undo selection"
+                          restoreOnClear
+                        />
+                      </div>
+                    ) : (
+                      <input
+                        type="hidden"
+                        name="image_path"
+                        value={item.imagePath}
+                      />
+                    )}
                     <TextField
                       label="Alt text"
                       name="alt_text"
@@ -159,7 +210,7 @@ export function ImageCollectionManager({
                         values={{ id: item.id, [config.idField]: parentId }}
                       />
                     </div>
-                  </form>
+                  </ImageForm>
                 </div>
               );
             })}

@@ -104,7 +104,7 @@ Before a production launch, configure these controls in the Supabase and hosting
 - Add an edge/WAF rate-limit rule for `/api/contact`; the database throttle limits repeated addresses, while an edge rule provides IP-based protection.
 - Never upload confidential or client-private imagery to the public `media` bucket. Use a private review/staging bucket if that workflow is needed.
 
-The application adds clickjacking, MIME-sniffing, referrer, permissions, and transport-security headers. It also validates uploaded image signatures server-side, but production image scanning/re-encoding can be added later if staff upload from untrusted sources.
+The application adds clickjacking, MIME-sniffing, referrer, permissions, and transport-security headers. Project photos upload directly to Storage after browser validation; the server checks their size, MIME type, and image signature before saving a project record. Other CMS uploads also validate image signatures server-side. Production image scanning/re-encoding can be added if staff upload from untrusted sources.
 
 ## Content workflow
 
