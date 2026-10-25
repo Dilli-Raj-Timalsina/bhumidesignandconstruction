@@ -101,8 +101,12 @@ function successRedirect(path: string, message: string): never {
 }
 
 function formRecord(formData: FormData) {
+  // Native Server Action submissions include React's hidden $ACTION_* fields.
   const record = Object.fromEntries(
-    [...formData.entries()].filter((entry) => !(entry[1] instanceof File)),
+    [...formData.entries()].filter(
+      ([name, value]) =>
+        !name.startsWith("$ACTION_") && !(value instanceof File),
+    ),
   );
   for (const [name, value] of formData.entries()) {
     if (!(value instanceof File) || value.size === 0 || !name.endsWith("_file"))
